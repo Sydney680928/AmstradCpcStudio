@@ -16,4 +16,10 @@
     <ProjectReference Include="..\..\..\X07-Studio\Sources\TextEditor\ICSharpCode.TextEditorEx.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="LocomotiveBasicPlus-Mode.xshd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

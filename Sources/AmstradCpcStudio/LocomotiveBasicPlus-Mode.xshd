@@ -1,0 +1,277 @@
+﻿<?xml version="1.0"?>
+<!-- syntax definition for AMSTRAD CPC LOCOMOTIVE BASIC -->
+
+<SyntaxDefinition name = "LocomotiveBasicPlus" extensions = ".basp">
+
+    <Digits name="Digits" bold="false" italic="false" color="Black"/>
+
+    <RuleSets>
+
+		<RuleSet ignorecase = "true">
+
+			<Delimiters>*()-+=|#/:;"&lt;&gt;,</Delimiters>
+
+			<Span name = "COMMENT1" bold = "false" italic = "false" color = "Gray" stopateol = "true">
+				<Begin singleword="true">REM </Begin>
+			</Span>
+
+			<Span name = "COMMENT2" bold = "false" italic = "true" color = "DarkGray" stopateol = "true">
+				<Begin singleword="true">//</Begin>
+			</Span>
+
+			<Span name = "IMPORT" bold = "false" italic = "true" color = "Green" stopateol = "true">
+				<Begin singleword="true">#IMPORT </Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name = "VARS" bold = "false" italic = "true" color = "DarkOrchid" stopateol = "true">
+				<Begin singleword="true">#VAR </Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name = "DEF" bold = "false" italic = "true" color = "SaddleBrown" stopateol = "true">
+				<Begin singleword="true">#DEF </Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="String" bold="false" italic="false" color="Green" stopateol="false" escapecharacter="\">
+				<Begin>"</Begin>
+				<End>"</End>
+			</Span>
+
+			<Span name = "LabelUsage" bold = "false" italic = "true" color = "Green" stopateol = "true">
+				<Begin>@@</Begin>
+				<End>:</End>
+			</Span>
+
+			<Span name="X01" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>ON ERROR GOTO</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X02" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>CHAIN MERGE</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X03" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>DEF FN</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X04" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>KEY DEF</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X05" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>LINE INPUT</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X06" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>ON BREAK GOSUB</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X07" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>ON BREAK STOP</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X08" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>PRINT USING</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X09" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>SPEED INK</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X10" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>SPEED KEY</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X11" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>SPEED WRITE</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X12" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>SYMBOL AFTER</Begin>
+				<End>@ </End>
+			</Span>
+
+			<Span name="X13" bold="false" italic="false" color="Blue" stopateol="true">
+				<Begin>WINDOW SWAP</Begin>
+				<End>@ </End>
+			</Span>
+
+			<KeyWords name = "commands_uppercase" bold="false" italic="false" color="Blue">
+				<Key word = "AFTER" />
+				<Key word = "AUTO" />
+				<Key word = "BORDER" />
+				<Key word = "CALL" />
+				<Key word = "CAT" />
+				<Key word = "CHAIN" />
+				<Key word = "DELETE" />
+				<Key word = "CLEAR" />
+				<Key word = "CLG" />
+				<Key word = "CLOSEIN" />
+				<Key word = "CLOSEOUT" />
+				<Key word = "CLS" />
+				<Key word = "CONT" />
+				<Key word = "DATA" />
+				<Key word = "DEFINT" />
+				<Key word = "DEFSTR" />
+				<Key word = "DEFREAL" />
+				<Key word = "DEG" />
+				<Key word = "DELETE" />
+				<Key word = "DI" />
+				<Key word = "DIM" />
+				<Key word = "DRAW" />
+				<Key word = "DRAWR" />
+				<Key word = "EDIT" />
+				<Key word = "EI" />
+				<Key word = "END" />
+				<Key word = "ENT" />
+				<Key word = "ENV" />
+				<Key word = "ERASE" />
+				<Key word = "ERROR" />
+				<Key word = "EVERY" />
+				<Key word = "FOR" />
+				<Key word = "TO" />
+				<Key word = "GOSUB" />
+				<Key word = "GOTO" />
+				<Key word = "IF" />
+				<Key word = "THEN" />
+				<Key word = "ELSE" />
+				<Key word = "INK" />
+				<Key word = "INPUT" />
+				<Key word = "KEY" />
+				<Key word = "LET" />
+				<Key word = "LIST" />
+				<Key word = "LOAD" />
+				<Key word = "LOCATE" />
+				<Key word = "MEMORY" />
+				<Key word = "MERGE" />
+				<Key word = "MODE" />
+				<Key word = "MOVE" />
+				<Key word = "MOVER" />
+				<Key word = "NEW" />
+				<Key word = "NEXT" />
+				<Key word = "ON" />
+				<Key word = "STOP" />
+				<Key word = "SQ" />
+				<Key word = "OPENIN" />
+				<Key word = "OPENOUT" />
+				<Key word = "ORIGIN" />
+				<Key word = "OUT" />
+				<Key word = "PAPER" />
+				<Key word = "PEN" />
+				<Key word = "PLOT" />
+				<Key word = "PLOTR" />
+				<Key word = "POKE" />
+				<Key word = "PRINT" />
+				<Key word = "RAD" />
+				<Key word = "RANDOMIZE" />
+				<Key word = "READ" />
+				<Key word = "RELEASE" />
+				<Key word = "REMAIN" />
+				<Key word = "RENUM" />
+				<Key word = "RESTORE" />
+				<Key word = "RESUME" />
+				<Key word = "RETURN" />
+				<Key word = "RUN" />
+				<Key word = "SAVE" />
+				<Key word = "SOUND" />
+				<Key word = "WRITE" />
+				<Key word = "STOP" />
+				<Key word = "SYMBOL" />
+				<Key word = "TAG" />
+				<Key word = "TAGOFF" />
+				<Key word = "TRON" />
+				<Key word = "TROFF" />
+				<Key word = "WAIT" />
+				<Key word = "WEND" />
+				<Key word = "WHILE" />
+				<Key word = "WIDTH" />
+				<Key word = "WINDOW" />
+				<Key word = "ZONE" />
+            </KeyWords>
+
+			<KeyWords name = "functions_uppercase" bold="false" italic="false" color="Firebrick">
+				<Key word = "ABS" />
+				<Key word = "ASC" />
+				<Key word = "ATN" />
+				<Key word = "BIN$" />
+				<Key word = "CHR$" />
+				<Key word = "CINT" />
+				<Key word = "COS" />
+				<Key word = "CREAL" />
+				<Key word = "EOF" />
+				<Key word = "EXP" />
+				<Key word = "FIX" />
+				<Key word = "FREE" />
+				<Key word = "HEX$" />
+				<Key word = "INKEY" />
+				<Key word = "INKEY$" />
+				<Key word = "INP" />
+				<Key word = "INSTR" />
+				<Key word = "INT" />
+				<Key word = "JOY" />
+				<Key word = "LEFT$" />
+				<Key word = "LEN" />
+				<Key word = "LOG" />
+				<Key word = "LOG10" />
+				<Key word = "LOWER$" />
+				<Key word = "MAX" />
+				<Key word = "MID$" />
+				<Key word = "MIN" />
+				<Key word = "PEEK" />
+				<Key word = "PI" />
+				<Key word = "POS" />
+				<Key word = "RIGHT$" />
+				<Key word = "RND" />
+				<Key word = "ROUND" />
+				<Key word = "SGN" />
+				<Key word = "SIN" />
+				<Key word = "SPACE$" />
+				<Key word = "SQ" />
+				<Key word = "SQR" />
+				<Key word = "STR$" />
+				<Key word = "STRING$" />
+				<Key word = "TAN" />
+				<Key word = "TEST" />
+				<Key word = "TESTR" />
+				<Key word = "TIME" />
+				<Key word = "UNT" />
+				<Key word = "UPPER$" />
+				<Key word = "VAL" />
+				<Key word = "VPOS" />
+				<Key word = "XPOS" />
+				<Key word = "YPOS" />
+			</KeyWords>
+
+			<KeyWords name = "vars_uppercase" bold="false" italic="false" color="Magenta">
+				<Key word = "ERR" />
+				<Key word = "ERL" />
+				<Key word = "HIMEM" />
+			</KeyWords>
+
+			<KeyWords name = "boolean_uppercase" bold="false" italic="false" color="Orange">
+				<Key word = "OR" />
+				<Key word = "AND" />
+				<Key word = "XOR" />
+				<Key word = "EQV" />
+				<Key word = "NOT" />
+			</KeyWords>
+
+		</RuleSet>
+		
+    </RuleSets>
+	
+</SyntaxDefinition>
+
