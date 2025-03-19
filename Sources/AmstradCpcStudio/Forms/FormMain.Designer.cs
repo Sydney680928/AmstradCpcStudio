@@ -40,10 +40,8 @@
             SymbolsMenu = new ToolStripMenuItem();
             WindowsMenu = new ToolStripMenuItem();
             AboutMenu = new ToolStripMenuItem();
-            pictureBox1 = new PictureBox();
             menuStrip1 = new MenuStrip();
             menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
             // menuStrip1
@@ -128,25 +126,11 @@
             AboutMenu.Size = new Size(92, 22);
             AboutMenu.Text = "A propos de...";
             // 
-            // pictureBox1
-            // 
-            pictureBox1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            pictureBox1.BackColor = Color.FromArgb(93, 107, 153);
-            pictureBox1.Image = Properties.Resources.P_Amstrad;
-            pictureBox1.Location = new Point(1061, 662);
-            pictureBox1.Margin = new Padding(3, 2, 3, 2);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(201, 161);
-            pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox1.TabIndex = 5;
-            pictureBox1.TabStop = false;
-            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1273, 832);
-            Controls.Add(pictureBox1);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             IsMdiContainer = true;
@@ -157,7 +141,6 @@
             ResizeEnd += FormMain_ResizeEnd;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
         }
 
@@ -174,6 +157,5 @@
         private ToolStripMenuItem OpenMenu;
         private ToolStripMenuItem OpenProgramBasicPlusMenu;
         private ToolStripMenuItem OpenProgramBasicMenu;
-        private PictureBox pictureBox1;
     }
 }
