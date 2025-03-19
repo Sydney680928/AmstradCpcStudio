@@ -42,16 +42,34 @@ namespace AmstradCpcStudio.Classes
             for (int i = 0; i < lines.Count; i++)
             {
                 var line = lines[i].Trim();
+
                 var lineNumber = i + 1;
 
                 if (line.Length > 0)
                 {
-                    // Les lignes de plus de 160 caractères ne sont pas supportées
+                    // Les lignes de plus de 250 caractères ne sont pas supportées
 
-                    if (line.Length > 160)
+                    if (line.Length > 250)
                     {
                         return new GeneratorResult(ResultStatusEnum.LineTooLong, lineNumber, line);
                     }
+
+                    // Si la ligne commence par un numéro de ligne, c'est interdit
+
+                    var k = line.IndexOf(' ');
+
+                    if (k > -1)
+                    {
+                        var begin = line.Substring(0, k);
+
+                        if (int.TryParse(begin, out var n))
+                        {
+                            // On a bien un nombre en 1er sur la ligne, c'est interdit !
+
+                            return new GeneratorResult(ResultStatusEnum.LineNumberNotAllowed, lineNumber, line);
+                        }
+                    }
+
                     if (line.StartsWith("//"))
                     { 
                         // Commentaire ignoré dans l'export
@@ -453,6 +471,7 @@ namespace AmstradCpcStudio.Classes
         {
             None,
             Success,
+            LineNumberNotAllowed,
             LineTooLong,
             IllegalLabelDeclaration,
             DuplicateLabelDeclaration,
@@ -493,6 +512,7 @@ namespace AmstradCpcStudio.Classes
                         var errorLabel = Status switch
                         {
                             ResultStatusEnum.Success => "Succès",
+                            ResultStatusEnum.LineNumberNotAllowed => "Les numéros de lignes ne sont pas autorisés",
                             ResultStatusEnum.DuplicateLabelDeclaration => "Label déclaré plusieurs fois",
                             ResultStatusEnum.IllegalLabelDeclaration => "Déclaration de label invalide",
                             ResultStatusEnum.LabelNotFound => "Label introuvable",
