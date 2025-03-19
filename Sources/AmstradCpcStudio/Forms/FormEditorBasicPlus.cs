@@ -6,7 +6,7 @@ namespace AmstradCpcStudio.Forms
 {
     public partial class FormEditorBasicPlus : Form
     {
-        private bool _CodeIsModified;      
+        private bool _CodeIsModified;
 
         public string? CurrentFilename { get; private set; }
 
@@ -44,7 +44,7 @@ namespace AmstradCpcStudio.Forms
             }
             else
             {
-                var file = Path.GetFileNameWithoutExtension(CurrentFilename);
+                var file = Path.GetFileName(CurrentFilename).ToUpper();
                 Text = $"BASIC+ / {file} {star}";
             }
         }
@@ -62,7 +62,7 @@ namespace AmstradCpcStudio.Forms
             }
             catch
             {
-                MessageBox.Show(MdiParent,"Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(MdiParent, "Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return false;
@@ -78,7 +78,7 @@ namespace AmstradCpcStudio.Forms
                 DefaultExt = ".bplus",
                 CheckPathExists = true,
                 CheckWriteAccess = true,
-                Filter = "Fichiers BASIC+|*.bplus"
+                Filter = "Fichiers BASIC+|*.b+"
             };
 
             var r = d.ShowDialog();
@@ -110,7 +110,6 @@ namespace AmstradCpcStudio.Forms
 
             }
         }
-
 
         #region UI EVENTS
 
@@ -144,18 +143,55 @@ namespace AmstradCpcStudio.Forms
 
         private void GenerateMenu_Click(object sender, EventArgs e)
         {
-            var r = CodeGenerator.Default.Generate(CodeEditor.Text);
+            var r = CodeGenerator.Default.Generate(CurrentFilename, CodeEditor.Text);
 
             if (r.Status == CodeGenerator.ResultStatusEnum.Success)
             {
                 // Génération OK
+                // On ouvre un éditeur locomotive basic et on y insère le code généré
+
+                var f = new FormEditorBasic(null, r.Code);
+                f.MdiParent = MdiParent;
+                f.Show();
             }
             else
             {
                 // Erreur pendant la génération !
 
                 SelectLine(r.ErrorLineNumber);
-                MessageBox.Show(MdiParent,r.ErrorMessage, "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(MdiParent, r.ErrorMessage, "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void FormEditorBasicPlus_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_CodeIsModified)
+            {
+                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, si vous continuez vous allez perdre vos modifications !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                e.Cancel = r == DialogResult.Cancel;
+            }
+        }
+
+        private void FormEditorBasicPlus_Load(object sender, EventArgs e)
+        {
+            if (Properties.Settings.Default.FormEditorBasicPlusTop > 0 && Properties.Settings.Default.FormEditorBasicPlusWidth > 0)
+            {
+                Top = Properties.Settings.Default.FormEditorBasicPlusTop;
+                Left = Properties.Settings.Default.FormEditorBasicPlusLeft;
+                Width = Properties.Settings.Default.FormEditorBasicPlusWidth;
+                Height = Properties.Settings.Default.FormEditorBasicPlusHeight;
+            }
+        }
+
+        private void FormEditorBasicPlus_ResizeEnd(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Normal)
+            {
+                Properties.Settings.Default.FormEditorBasicPlusTop = Top;
+                Properties.Settings.Default.FormEditorBasicPlusLeft = Left;
+                Properties.Settings.Default.FormEditorBasicPlusWidth = Width;
+                Properties.Settings.Default.FormEditorBasicPlusHeight = Height;
+                Properties.Settings.Default.Save();
             }
         }
 

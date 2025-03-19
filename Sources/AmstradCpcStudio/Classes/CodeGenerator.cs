@@ -13,7 +13,7 @@ namespace AmstradCpcStudio.Classes
     {
         public static CodeGenerator Default { get; } = new();   
 
-        public GeneratorResult Generate(string source)
+        public GeneratorResult Generate(string? filename, string source)
         {
             Debug.WriteLine("");
 
@@ -28,14 +28,10 @@ namespace AmstradCpcStudio.Classes
             // On ajoute les lignes et on stocke tous les labels avec la ligne qui correspond
 
             var labels = new Dictionary<string, int>();
-            var vars = new Dictionary<string, List<string>>();
             var defs = new Dictionary<string, Definition>();
             int numLine;
             List<ExportLine> exports = new();
             List<string> imports = new();
-            List<string> types = ["$", "%", "!", "#", "@"];
-
-            foreach (var t in types) vars[t] = new();
 
             numLine = 90;
 
@@ -102,39 +98,55 @@ namespace AmstradCpcStudio.Classes
                     else if (line.StartsWith("#IMPORT "))
                     {
                         // On est en face d'une ligne d'import 
-                        // #IMPORT FICHIER LIB
+                        // #IMPORT PATH FICHIER LIB
 
-                        var lib = line.Substring(8);
+                        // On se place dans le dossier du code source
+                        // Si impossible erreur
 
-                        if (imports.Contains(lib))
+                        try
+                        {
+                            var path = Path.GetDirectoryName(filename);
+                            Directory.SetCurrentDirectory(path ?? "");
+                        }
+                        catch
+                        {
+                            return new GeneratorResult(ResultStatusEnum.UnabledToDefineCurrentDirectory, lineNumber, line);
+                        }
+
+                        var libname = line.Substring(8);
+
+                        if (imports.Contains(libname))
                         {
                             // Cette lib a déjà été importée
-
-                            // return new GeneratorResult(ResultStatusEnum.LibraryAlreadyImported, lineNumber, line);
+                            // Pour le moment on laisse faire
+                            // Une lib peut être demandée dans plusieurs libs en cascade
                         }
                         else
                         {
-                            var file = Path.Combine(AppGlobal.LibrarysFolder, lib);
-
-                            if (!File.Exists(file))
+                            if (!File.Exists(libname))
                             {
                                 // Le fichier n'existe pas !
 
                                 return new GeneratorResult(ResultStatusEnum.LibraryNotFound, lineNumber, line);
                             }
 
-                            // On charge la lib
+                            // On charge le code de la lib
 
-                            var plib = Project.Load(file);
+                            string? libCode = null;
 
-                            if (plib == null)
+                            try
                             {
-                                // Impossible de charger la lib !
+                                var reader = new StreamReader(libname);
+                                libCode = reader.ReadToEnd();
+                            }
+                            catch
+                            {
+                                // Impossible de charger le code de la lib !
 
                                 return new GeneratorResult(ResultStatusEnum.LibraryLoadError, lineNumber, line);
-                            }
+                            }                       
 
-                            if (string.IsNullOrEmpty(plib.Code))
+                            if (string.IsNullOrEmpty(libCode))
                             {
                                 // lib vide !
 
@@ -150,7 +162,7 @@ namespace AmstradCpcStudio.Classes
 
                             // On prend le code de la lib et on ajoute les lines à la fin du code actuel
 
-                            var l = plib.Code.Replace("\t", "").Split("\n");
+                            var l = libCode.Replace("\t", "").Split("\n");
 
                             for (int j = 0; j < l.Length; j++)
                             {
@@ -159,52 +171,8 @@ namespace AmstradCpcStudio.Classes
 
                             // On référence la lib pour ne pas l'utiliser plusieurs fois
 
-                            imports.Add(lib);
+                            imports.Add(libname);
                         }
-                    }
-                    else if (line.StartsWith("#VAR "))
-                    {
-                        if (line.Length < 6) return new(ResultStatusEnum.VarDefinitionError, lineNumber, line);
-
-                        var varName = line.Substring(5);
-
-                        for (int j = 0; j < varName.Length; j++)
-                        {
-                            var c = varName[j];
-
-                            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0'&& c <= '9') || c == '_' || c == '.' || c == '%' || c == '#' || c == '$' || c == '!'))
-                            {
-                                return new(ResultStatusEnum.VarDefinitionError, lineNumber, line);
-                            }
-
-                            // Les caractères ! % # $ doivent se trouver en dernière position dans le nom (type de la variable)
-
-                            if ((c == '%' || c == '$' || c == '#' || c == '!') && j != (varName.Length -1))
-                            {
-                                return new(ResultStatusEnum.VarDefinitionError, lineNumber, line);
-                            }
-                        }
-
-                        var lastChar = varName[varName.Length - 1];
-
-                        var varType = lastChar switch
-                        {
-                            '$' => "$",
-                            '%' => "%",
-                            '#' => "#",
-                            '!' => "!",
-                            _ => "@"
-                        };
-
-                        if (varType == "@")
-                        {
-                            varName += "#";
-                            varType = "#";
-                        }
-
-                        if (vars[varType].Contains(varName)) return new(ResultStatusEnum.DuplicateVarDefinition, lineNumber, line);
-
-                        vars[varType].Add(varName);  
                     }
                     else if (line.StartsWith("#DEF "))
                     {
@@ -302,106 +270,22 @@ namespace AmstradCpcStudio.Classes
                 if (line.BasicLine.Contains(" @")) return new GeneratorResult(ResultStatusEnum.LabelNotFound, line.SourceLineIndex + 1, line.SourceCode);
             }
 
-            // On ajoute en debut de programme la déclaration des variables étendues
-
-            int varCount = 0;
-
-            foreach (string varType in types)
-            {
-                varCount += vars[varType].Count;
-            }
-
-            int nl = 50 + varCount;
-
-            foreach (string varType in types)
-            {
-                var realType = varType switch
-                {
-                    "$" => "$",
-                    "%" => "%",
-                    "!" => "!",
-                    "#" => "#",
-                    _ => "#"
-                };
-
-                var varList = vars[varType];
-
-                if (varList.Count > 0)
-                {
-                    nl -= 1;
-                    var line = $"DIM X7{realType}({varList.Count - 1})";
-
-                    var e = new ExportLine()
-                    {
-                        SourceCode = "#VAR DECLARATION",
-                        SourceLineIndex = 0,
-                        FinalNumLine = nl,
-                        BasicLine = $"{nl} {line}"
-                    };
-
-                    exports.Insert(0, e);
-                }
-            }
-
-            // On remplace les variables étendues par leur variable tableaux calculées
-
-            foreach (var varType in types)
-            {
-                var realType = varType switch
-                {
-                    "$" => "$",
-                    "%" => "%",
-                    "!" => "!",
-                    "#" => "#",
-                    _ => "#"
-                };
-
-                var varList = vars[varType];
-
-                // On trie les variables de celles avec le plus grand nom à celle avec le plus petit nom
-                // Sans cet ordre des soucis de remplacement partiels apparaissent avec des varables dont le nom est proche
-                // Ex SCORE% et DISPLAY_SCORE% par exemple
-
-                varList.Sort();
-
-                for (int j = 0; j < varList.Count; j++)
-                {
-                    var oldname = $"{varList[j]}";
-                    var newName = $"X7{realType}({j})";
-
-                    for (int i = 0; i < exports.Count; i++)
-                    {
-                        var e = exports[i];
-                        if (e.FinalNumLine >= 100) e.BasicLine = e.BasicLine.Replace(oldname, newName);
-                    }
-                }
-            }
-
             exports.Insert(0, new ExportLine()
             {
-                SourceCode = "** X07 STUDIO HEADER **",
-                SourceLineIndex = 0,
-                FinalNumLine = 30,
-                BasicLine = $"30 REM BY STEPHANE SIBUE"
-            });
-
-            exports.Insert(0, new ExportLine()
-            {
-                SourceCode = "** X07 STUDIO HEADER **",
+                SourceCode = "** STUDIO HEADER **",
                 SourceLineIndex = 0,
                 FinalNumLine = 20,
-                BasicLine = $"20 REM GENERATED WITH X07 STUDIO"
+                BasicLine = $"20 REM GENERATED WITH AMSTRAD CPC STUDIO"
             });
 
-
-            var projectName = Path.GetFileNameWithoutExtension(Project.Default.Filename ?? "SANS NOM");
+            var name = filename == null ? "SANS NOM" : Path.GetFileNameWithoutExtension(filename).ToUpper();
 
             exports.Insert(0, new ExportLine()
             {
-                SourceCode = "** X07 STUDIO HEADER **",
+                SourceCode = "** STUDIO HEADER **",
                 SourceLineIndex = 0,
                 FinalNumLine = 10,
-                BasicLine = $"10 REM PROGRAM {projectName}"
+                BasicLine = $"10 REM PROGRAM {name}"
             });
           
             var sb = new StringBuilder();
@@ -476,7 +360,7 @@ namespace AmstradCpcStudio.Classes
             IllegalLabelDeclaration,
             DuplicateLabelDeclaration,
             LabelNotFound,
-            LibraryAlreadyImported,
+            UnabledToDefineCurrentDirectory,
             LibraryNotFound,
             LibraryLoadError,
             LibraryIsEmpty,
@@ -511,23 +395,23 @@ namespace AmstradCpcStudio.Classes
                     {
                         var errorLabel = Status switch
                         {
-                            ResultStatusEnum.Success => "Succès",
-                            ResultStatusEnum.LineNumberNotAllowed => "Les numéros de lignes ne sont pas autorisés",
-                            ResultStatusEnum.DuplicateLabelDeclaration => "Label déclaré plusieurs fois",
-                            ResultStatusEnum.IllegalLabelDeclaration => "Déclaration de label invalide",
-                            ResultStatusEnum.LabelNotFound => "Label introuvable",
-                            ResultStatusEnum.LibraryNotFound => "Bibliothèque introuvable",
-                            ResultStatusEnum.LibraryIsEmpty => "Bibliothèque vide",
-                            ResultStatusEnum.LibraryAlreadyImported => "Bibliothèque déjà importée",
-                            ResultStatusEnum.LibraryLoadError => "Chargement de la bibliothèque impossible",
-                            ResultStatusEnum.LineTooLong => "Ligne trop longue",
-                            ResultStatusEnum.VarDefinitionError => "Erreur de définition de variable étendue",
-                            ResultStatusEnum.DuplicateVarDefinition => "Variable étendue déclarée plusieurs fois",
-                            ResultStatusEnum.DefinitionError => "Définition non valide",
-                            ResultStatusEnum.DuplicateDefinition => "Définition déclarée plusieurs fois",
-                            ResultStatusEnum.CallDefinitionError => "Appel incorrect d'une définition",
-                            ResultStatusEnum.None => "Aucun",
-                            _ => "Statut inconnu"
+                            ResultStatusEnum.Success => "Succès.",
+                            ResultStatusEnum.LineNumberNotAllowed => "Les numéros de lignes ne sont pas autorisés.",
+                            ResultStatusEnum.DuplicateLabelDeclaration => "Label déclaré plusieurs fois.",
+                            ResultStatusEnum.IllegalLabelDeclaration => "Déclaration de label invalide.",
+                            ResultStatusEnum.LabelNotFound => "Label introuvable.",
+                            ResultStatusEnum.UnabledToDefineCurrentDirectory => "Impossible de déterminer le dossier de travail.",
+                            ResultStatusEnum.LibraryNotFound => "Bibliothèque introuvable.",
+                            ResultStatusEnum.LibraryIsEmpty => "Bibliothèque vide.",
+                            ResultStatusEnum.LibraryLoadError => "Chargement de la bibliothèque impossible.",
+                            ResultStatusEnum.LineTooLong => "Ligne trop longue.",
+                            ResultStatusEnum.VarDefinitionError => "Erreur de définition de variable étendue.",
+                            ResultStatusEnum.DuplicateVarDefinition => "Variable étendue déclarée plusieurs fois.",
+                            ResultStatusEnum.DefinitionError => "Définition non valide.",
+                            ResultStatusEnum.DuplicateDefinition => "Définition déclarée plusieurs fois.",
+                            ResultStatusEnum.CallDefinitionError => "Appel incorrect d'une définition.",
+                            ResultStatusEnum.None => "Aucun.",
+                            _ => "Statut inconnu !"
                         };
 
                         sb.AppendLine(errorLabel);

@@ -6,11 +6,11 @@ namespace AmstradCpcStudio.Forms
 {
     public partial class FormEditorBasic : Form
     {
-        private bool _CodeIsModified;      
+        private bool _CodeIsModified;
 
         public string? CurrentFilename { get; private set; }
 
-        public FormEditorBasicPlus(string? filename, string? code)
+        public FormEditorBasic(string? filename, string? code)
         {
             InitializeComponent();
 
@@ -22,7 +22,7 @@ namespace AmstradCpcStudio.Forms
             {
                 var fsmProvider = new FileSyntaxModeProvider(dir);
                 HighlightingManager.Manager.AddSyntaxModeFileProvider(fsmProvider);
-                CodeEditor.SetHighlighting("LocomotiveBasicPlus");
+                CodeEditor.SetHighlighting("LocomotiveBasic");
             }
 
             // Intégration du fichier de code
@@ -40,12 +40,12 @@ namespace AmstradCpcStudio.Forms
 
             if (CurrentFilename == null)
             {
-                Text = $"BASIC+ / SANS NOM {star}";
+                Text = $"LOCOMOTIVE BASIC / SANS NOM {star}";
             }
             else
             {
-                var file = Path.GetFileNameWithoutExtension(CurrentFilename);
-                Text = $"BASIC+ / {file} {star}";
+                var file = Path.GetFileName(CurrentFilename).ToUpper();
+                Text = $"LOCOMOTIVE BASIC / {file} {star}";
             }
         }
 
@@ -62,7 +62,7 @@ namespace AmstradCpcStudio.Forms
             }
             catch
             {
-                MessageBox.Show(MdiParent,"Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(MdiParent, "Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return false;
@@ -78,7 +78,7 @@ namespace AmstradCpcStudio.Forms
                 DefaultExt = ".bplus",
                 CheckPathExists = true,
                 CheckWriteAccess = true,
-                Filter = "Fichiers BASIC+|*.bplus"
+                Filter = "Fichiers BASIC|*.bas"
             };
 
             var r = d.ShowDialog();
@@ -142,20 +142,35 @@ namespace AmstradCpcStudio.Forms
 
         }
 
-        private void GenerateMenu_Click(object sender, EventArgs e)
+        private void FormEditorBasic_FormClosing(object sender, FormClosingEventArgs e)
         {
-            var r = CodeGenerator.Default.Generate(CodeEditor.Text);
-
-            if (r.Status == CodeGenerator.ResultStatusEnum.Success)
+            if (_CodeIsModified)
             {
-                // Génération OK
+                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, si vous continuez vous allez perdre vos modifications !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                e.Cancel = r == DialogResult.Cancel;
             }
-            else
-            {
-                // Erreur pendant la génération !
+        }
 
-                SelectLine(r.ErrorLineNumber);
-                MessageBox.Show(MdiParent,r.ErrorMessage, "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        private void FormEditorBasic_Load(object sender, EventArgs e)
+        {
+            if (Properties.Settings.Default.FormEditorBasicTop > 0 && Properties.Settings.Default.FormEditorBasicWidth > 0)
+            {
+                Top = Properties.Settings.Default.FormEditorBasicTop;
+                Left = Properties.Settings.Default.FormEditorBasicLeft;
+                Width = Properties.Settings.Default.FormEditorBasicWidth;
+                Height = Properties.Settings.Default.FormEditorBasicHeight;
+            }
+        }
+
+        private void FormEditorBasic_ResizeEnd(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Normal)
+            {
+                Properties.Settings.Default.FormEditorBasicTop = Top;
+                Properties.Settings.Default.FormEditorBasicLeft = Left;
+                Properties.Settings.Default.FormEditorBasicWidth = Width;
+                Properties.Settings.Default.FormEditorBasicHeight = Height;
+                Properties.Settings.Default.Save();
             }
         }
 
