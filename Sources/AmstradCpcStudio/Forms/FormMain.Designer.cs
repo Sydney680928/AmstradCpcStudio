@@ -33,12 +33,12 @@
             FileNewMenu = new ToolStripMenuItem();
             FileNewProgramBasicPlusMenu = new ToolStripMenuItem();
             FileNewProgramBasicMenu = new ToolStripMenuItem();
-            SymbolsMenu = new ToolStripMenuItem();
-            WindowsMenu = new ToolStripMenuItem();
-            AboutMenu = new ToolStripMenuItem();
             OpenMenu = new ToolStripMenuItem();
             OpenProgramBasicPlusMenu = new ToolStripMenuItem();
             OpenProgramBasicMenu = new ToolStripMenuItem();
+            SymbolsMenu = new ToolStripMenuItem();
+            WindowsMenu = new ToolStripMenuItem();
+            AboutMenu = new ToolStripMenuItem();
             menuStrip1 = new MenuStrip();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -53,7 +53,8 @@
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.MdiWindowListItem = WindowsMenu;
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1271, 35);
+            menuStrip1.Padding = new Padding(5, 2, 0, 2);
+            menuStrip1.Size = new Size(587, 26);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -61,76 +62,75 @@
             // 
             FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewMenu, OpenMenu });
             FileMenu.Name = "FileMenu";
-            FileMenu.Size = new Size(66, 31);
+            FileMenu.Size = new Size(54, 22);
             FileMenu.Text = "Fichier";
             // 
             // FileNewMenu
             // 
             FileNewMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewProgramBasicPlusMenu, FileNewProgramBasicMenu });
             FileNewMenu.Name = "FileNewMenu";
-            FileNewMenu.Size = new Size(224, 26);
+            FileNewMenu.Size = new Size(122, 22);
             FileNewMenu.Text = "Nouveau";
             // 
             // FileNewProgramBasicPlusMenu
             // 
             FileNewProgramBasicPlusMenu.Name = "FileNewProgramBasicPlusMenu";
-            FileNewProgramBasicPlusMenu.Size = new Size(224, 26);
+            FileNewProgramBasicPlusMenu.Size = new Size(178, 22);
             FileNewProgramBasicPlusMenu.Text = "Programme Basic +";
             FileNewProgramBasicPlusMenu.Click += FileNewProgramBasicPlusMenu_Click;
             // 
             // FileNewProgramBasicMenu
             // 
             FileNewProgramBasicMenu.Name = "FileNewProgramBasicMenu";
-            FileNewProgramBasicMenu.Size = new Size(224, 26);
+            FileNewProgramBasicMenu.Size = new Size(178, 22);
             FileNewProgramBasicMenu.Text = "Programme Basic";
-            // 
-            // SymbolsMenu
-            // 
-            SymbolsMenu.Name = "SymbolsMenu";
-            SymbolsMenu.Size = new Size(87, 31);
-            SymbolsMenu.Text = "Symboles";
-            // 
-            // WindowsMenu
-            // 
-            WindowsMenu.Name = "WindowsMenu";
-            WindowsMenu.Size = new Size(78, 31);
-            WindowsMenu.Text = "Fenêtres";
-            // 
-            // AboutMenu
-            // 
-            AboutMenu.Name = "AboutMenu";
-            AboutMenu.Size = new Size(114, 31);
-            AboutMenu.Text = "A propos de...";
             // 
             // OpenMenu
             // 
             OpenMenu.DropDownItems.AddRange(new ToolStripItem[] { OpenProgramBasicPlusMenu, OpenProgramBasicMenu });
             OpenMenu.Name = "OpenMenu";
-            OpenMenu.Size = new Size(224, 26);
+            OpenMenu.Size = new Size(122, 22);
             OpenMenu.Text = "Ouvrir";
             // 
             // OpenProgramBasicPlusMenu
             // 
             OpenProgramBasicPlusMenu.Name = "OpenProgramBasicPlusMenu";
-            OpenProgramBasicPlusMenu.Size = new Size(224, 26);
+            OpenProgramBasicPlusMenu.Size = new Size(180, 22);
             OpenProgramBasicPlusMenu.Text = "Programme BASIC+";
             OpenProgramBasicPlusMenu.Click += OpenProgramBasicPlusMenu_Click;
             // 
             // OpenProgramBasicMenu
             // 
             OpenProgramBasicMenu.Name = "OpenProgramBasicMenu";
-            OpenProgramBasicMenu.Size = new Size(224, 26);
+            OpenProgramBasicMenu.Size = new Size(180, 22);
             OpenProgramBasicMenu.Text = "Programme BASIC";
+            // 
+            // SymbolsMenu
+            // 
+            SymbolsMenu.Name = "SymbolsMenu";
+            SymbolsMenu.Size = new Size(70, 22);
+            SymbolsMenu.Text = "Symboles";
+            // 
+            // WindowsMenu
+            // 
+            WindowsMenu.Name = "WindowsMenu";
+            WindowsMenu.Size = new Size(63, 22);
+            WindowsMenu.Text = "Fenêtres";
+            // 
+            // AboutMenu
+            // 
+            AboutMenu.Name = "AboutMenu";
+            AboutMenu.Size = new Size(92, 22);
+            AboutMenu.Text = "A propos de...";
             // 
             // FormMain
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1271, 788);
+            ClientSize = new Size(587, 369);
             Controls.Add(menuStrip1);
             IsMdiContainer = true;
             MainMenuStrip = menuStrip1;
-            Margin = new Padding(3, 4, 3, 4);
             Name = "FormMain";
             Text = "AMSTRAD CPC STUDIO";
             menuStrip1.ResumeLayout(false);

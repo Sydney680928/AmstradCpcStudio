@@ -1,14 +1,16 @@
 ﻿using ICSharpCode.TextEditor.Document;
+using AmstradCpcStudio.Classes;
+using ICSharpCode.TextEditor;
 
 namespace AmstradCpcStudio.Forms
 {
     public partial class FormEditorBasicPlus : Form
     {
-        private bool _CodeIsModified;
+        private bool _CodeIsModified;      
 
         public string? CurrentFilename { get; private set; }
 
-        public FormEditorBasicPlus(string? filename,string? code)
+        public FormEditorBasicPlus(string? filename, string? code)
         {
             InitializeComponent();
 
@@ -27,20 +29,23 @@ namespace AmstradCpcStudio.Forms
 
             CurrentFilename = filename;
             CodeEditor.Text = code;
+            _CodeIsModified = false;
 
             UpdateFormTitle();
         }
 
         private void UpdateFormTitle()
         {
+            var star = _CodeIsModified ? "*" : "";
+
             if (CurrentFilename == null)
             {
-                Text = "BASIC+ / SANS NOM";
+                Text = $"BASIC+ / SANS NOM {star}";
             }
             else
             {
                 var file = Path.GetFileNameWithoutExtension(CurrentFilename);
-                Text = $"BASIC+ / {file}";
+                Text = $"BASIC+ / {file} {star}";
             }
         }
 
@@ -57,7 +62,7 @@ namespace AmstradCpcStudio.Forms
             }
             catch
             {
-                MessageBox.Show("Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(MdiParent,"Impossible d'enregistrer le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return false;
@@ -67,7 +72,8 @@ namespace AmstradCpcStudio.Forms
         {
             using var d = new SaveFileDialog()
             {
-                FileName = CurrentFilename,
+                FileName = Path.GetFileName(CurrentFilename),
+                InitialDirectory = Path.GetDirectoryName(CurrentFilename),
                 AddExtension = true,
                 DefaultExt = ".bplus",
                 CheckPathExists = true,
@@ -87,6 +93,24 @@ namespace AmstradCpcStudio.Forms
             return false;
         }
 
+        public void SelectLine(int lineNumber)
+        {
+            try
+            {
+                CodeEditor.ActiveTextAreaControl.SelectionManager.ClearSelection();
+
+                var startLocation = new TextLocation(0, lineNumber - 1);
+                var endLocation = new TextLocation(80, lineNumber - 1);
+
+                CodeEditor.ActiveTextAreaControl.SelectionManager.SetSelection(startLocation, endLocation);
+                CodeEditor.ActiveTextAreaControl.ScrollTo(endLocation.Line, endLocation.Column);
+            }
+            catch
+            {
+
+            }
+        }
+
 
         #region UI EVENTS
 
@@ -94,6 +118,7 @@ namespace AmstradCpcStudio.Forms
         {
             if (Save())
             {
+                _CodeIsModified = false;
                 UpdateFormTitle();
             }
         }
@@ -102,7 +127,35 @@ namespace AmstradCpcStudio.Forms
         {
             if (SaveAs())
             {
+                _CodeIsModified = false;
                 UpdateFormTitle();
+            }
+        }
+
+        private void CodeEditor_TextChanged(object sender, EventArgs e)
+        {
+            if (!_CodeIsModified)
+            {
+                _CodeIsModified = true;
+                UpdateFormTitle();
+            }
+
+        }
+
+        private void GenerateMenu_Click(object sender, EventArgs e)
+        {
+            var r = CodeGenerator.Default.Generate(CodeEditor.Text);
+
+            if (r.Status == CodeGenerator.ResultStatusEnum.Success)
+            {
+                // Génération OK
+            }
+            else
+            {
+                // Erreur pendant la génération !
+
+                SelectLine(r.ErrorLineNumber);
+                MessageBox.Show(MdiParent,r.ErrorMessage, "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

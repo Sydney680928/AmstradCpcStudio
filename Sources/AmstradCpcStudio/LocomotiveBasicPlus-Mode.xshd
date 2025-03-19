@@ -142,6 +142,7 @@
 				<Key word = "ERROR" />
 				<Key word = "EVERY" />
 				<Key word = "FOR" />
+				<Key word = "STEP" />
 				<Key word = "TO" />
 				<Key word = "GOSUB" />
 				<Key word = "GOTO" />
