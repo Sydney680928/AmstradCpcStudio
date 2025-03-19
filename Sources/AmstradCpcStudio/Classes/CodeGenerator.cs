@@ -29,6 +29,7 @@ namespace AmstradCpcStudio.Classes
 
             var labels = new Dictionary<string, int>();
             var defs = new Dictionary<string, Definition>();
+            var consts = new Dictionary<string, string>();
             int numLine;
             List<ExportLine> exports = new();
             List<string> imports = new();
@@ -194,6 +195,40 @@ namespace AmstradCpcStudio.Classes
                             return new(ResultStatusEnum.DefinitionError, lineNumber, line);
                         }                      
                     }
+                    else if (line.StartsWith("#CONST "))
+                    {
+                        // #CONST KEY_UP=240
+                        // #CONST KEY_UP=240
+
+                        var s = line.Substring(7).Trim();
+                        k = s.IndexOf('=');
+
+                        if (k == -1)
+                        {
+                            // Le signe = est manquant !
+
+                            return new GeneratorResult(ResultStatusEnum.ConstantDefinitionError, lineNumber, line); 
+                        }
+
+                        var constName = s.Substring(0, k).Trim();
+                        var constValue = s.Substring(k + 1).Trim();
+
+                        if (consts.ContainsKey(constName))
+                        {
+                            // Si la constante est redéfinie avec une autre valeur on sort en erreur
+                            // Sinon on ne dit rien
+
+                            if (consts[constName] != constValue)
+                            {
+                                return new GeneratorResult(ResultStatusEnum.DuplicateConstantDefinition, lineNumber, line); 
+                            }
+                        }
+                        else
+                        {
+                            consts[constName] = constValue;
+                            Debug.WriteLine($"CONST {constName} = {constValue}");
+                        }
+                    }
                     else
                     {
                         numLine += 10;
@@ -207,6 +242,28 @@ namespace AmstradCpcStudio.Classes
                         };
 
                         exports.Add(l);
+                    }
+                }
+            }
+
+            // On trie les constantes de la plus grande à la plus petite
+
+            var constKeys = consts.Keys.ToList();
+            int constSort(string l1, string l2) => l2.CompareTo(l1);
+            constKeys.Sort(constSort);
+
+            // On remplace les constantes par leur vraie valeur
+
+            foreach (var constName in constKeys)
+            {
+                for (int i = 0; i < exports.Count; i++)
+                {
+                    var e = exports[i];
+
+                    if (e.FinalNumLine >= 100)
+                    {
+                        var newLine = e.BasicLine.Replace(constName, consts[constName]);
+                        e.BasicLine = newLine;                      
                     }
                 }
             }
@@ -270,6 +327,8 @@ namespace AmstradCpcStudio.Classes
                 if (line.BasicLine.Contains(" @")) return new GeneratorResult(ResultStatusEnum.LabelNotFound, line.SourceLineIndex + 1, line.SourceCode);
             }
 
+            // On insère les lignes de titre du programme (lignes 10 et 20)
+
             exports.Insert(0, new ExportLine()
             {
                 SourceCode = "** STUDIO HEADER **",
@@ -290,6 +349,8 @@ namespace AmstradCpcStudio.Classes
           
             var sb = new StringBuilder();
             foreach( var line in exports) sb.AppendLine(line.BasicLine);
+
+            // On retourne le code généré
 
             return new GeneratorResult(sb.ToString());
         }
@@ -368,7 +429,9 @@ namespace AmstradCpcStudio.Classes
             DuplicateVarDefinition,
             DefinitionError,
             DuplicateDefinition,
-            CallDefinitionError
+            CallDefinitionError,
+            ConstantDefinitionError,
+            DuplicateConstantDefinition
         }
 
         public class GeneratorResult
@@ -410,6 +473,8 @@ namespace AmstradCpcStudio.Classes
                             ResultStatusEnum.DefinitionError => "Définition non valide.",
                             ResultStatusEnum.DuplicateDefinition => "Définition déclarée plusieurs fois.",
                             ResultStatusEnum.CallDefinitionError => "Appel incorrect d'une définition.",
+                            ResultStatusEnum.ConstantDefinitionError => "Erreur de définition d'une constante.",
+                            ResultStatusEnum.DuplicateConstantDefinition => "Constante déjà définie avec une valeur différente.",
                             ResultStatusEnum.None => "Aucun.",
                             _ => "Statut inconnu !"
                         };

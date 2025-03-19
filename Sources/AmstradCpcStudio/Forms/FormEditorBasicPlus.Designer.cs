@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             MenuStrip menuStrip1;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormEditorBasicPlus));
             FileMenu = new ToolStripMenuItem();
             FileSaveMenu = new ToolStripMenuItem();
             FileSaveAsMenu = new ToolStripMenuItem();
@@ -55,27 +56,27 @@
             // 
             FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileSaveMenu, FileSaveAsMenu });
             FileMenu.Name = "FileMenu";
-            FileMenu.Size = new Size(66, 31);
+            FileMenu.Size = new Size(54, 31);
             FileMenu.Text = "Fichier";
             // 
             // FileSaveMenu
             // 
             FileSaveMenu.Name = "FileSaveMenu";
-            FileSaveMenu.Size = new Size(205, 26);
+            FileSaveMenu.Size = new Size(166, 22);
             FileSaveMenu.Text = "Enregistrer";
             FileSaveMenu.Click += FileSaveMenu_Click;
             // 
             // FileSaveAsMenu
             // 
             FileSaveAsMenu.Name = "FileSaveAsMenu";
-            FileSaveAsMenu.Size = new Size(205, 26);
+            FileSaveAsMenu.Size = new Size(166, 22);
             FileSaveAsMenu.Text = "Enregistrer sous...";
             FileSaveAsMenu.Click += FileSaveAsMenu_Click;
             // 
             // GenerateMenu
             // 
             GenerateMenu.Name = "GenerateMenu";
-            GenerateMenu.Size = new Size(75, 31);
+            GenerateMenu.Size = new Size(60, 31);
             GenerateMenu.Text = "Générer";
             GenerateMenu.Click += GenerateMenu_Click;
             // 
@@ -99,6 +100,7 @@
             ClientSize = new Size(941, 777);
             Controls.Add(CodeEditor);
             Controls.Add(menuStrip1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Margin = new Padding(2);
             MaximizeBox = false;

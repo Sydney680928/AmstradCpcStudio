@@ -29,6 +29,11 @@
 				<End>@ </End>
 			</Span>
 
+			<Span name="CONST" bold="false" italic="true" color="SteelBlue" stopateol="true">
+				<Begin singleword="true">#CONST </Begin>
+				<End>@ </End>
+			</Span>
+
 			<Span name="String" bold="false" italic="false" color="Green" stopateol="false" escapecharacter="\">
 				<Begin>"</Begin>
 				<End>"</End>

@@ -14,6 +14,10 @@ namespace AmstradCpcStudio.Forms
         {
             InitializeComponent();
 
+            // Taille de la police
+
+            CodeEditor.Font = new Font(CodeEditor.Font.FontFamily, Properties.Settings.Default.BasicEditorFontSize);
+
             // Chargement de la syntaxe locomotive basic
 
             string? dir = Path.GetDirectoryName(Application.ExecutablePath);

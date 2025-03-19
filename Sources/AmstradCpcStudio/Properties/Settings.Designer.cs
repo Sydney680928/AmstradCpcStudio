@@ -166,5 +166,17 @@ namespace AmstradCpcStudio.Properties {
                 this["FormEditorBasicHeight"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("12")]
+        public float BasicEditorFontSize {
+            get {
+                return ((float)(this["BasicEditorFontSize"]));
+            }
+            set {
+                this["BasicEditorFontSize"] = value;
+            }
+        }
     }
 }
