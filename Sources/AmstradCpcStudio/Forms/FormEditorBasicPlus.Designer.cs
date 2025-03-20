@@ -48,7 +48,7 @@
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(5, 2, 0, 2);
-            menuStrip1.Size = new Size(941, 35);
+            menuStrip1.Size = new Size(941, 30);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -56,7 +56,7 @@
             // 
             FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileSaveMenu, FileSaveAsMenu });
             FileMenu.Name = "FileMenu";
-            FileMenu.Size = new Size(54, 31);
+            FileMenu.Size = new Size(54, 26);
             FileMenu.Text = "Fichier";
             // 
             // FileSaveMenu
@@ -76,7 +76,7 @@
             // GenerateMenu
             // 
             GenerateMenu.Name = "GenerateMenu";
-            GenerateMenu.Size = new Size(60, 31);
+            GenerateMenu.Size = new Size(60, 26);
             GenerateMenu.Text = "Générer";
             GenerateMenu.Click += GenerateMenu_Click;
             // 
@@ -86,10 +86,10 @@
             CodeEditor.Dock = DockStyle.Fill;
             CodeEditor.Font = new Font("Consolas", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
             CodeEditor.IsReadOnly = false;
-            CodeEditor.Location = new Point(0, 35);
+            CodeEditor.Location = new Point(0, 30);
             CodeEditor.Margin = new Padding(2);
             CodeEditor.Name = "CodeEditor";
-            CodeEditor.Size = new Size(941, 742);
+            CodeEditor.Size = new Size(941, 747);
             CodeEditor.TabIndex = 1;
             CodeEditor.VRulerRow = 255;
             CodeEditor.TextChanged += CodeEditor_TextChanged;
@@ -106,6 +106,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FormEditorBasicPlus";
+            ShowIcon = false;
             Text = "BASIC+";
             FormClosing += FormEditorBasicPlus_FormClosing;
             Load += FormEditorBasicPlus_Load;

@@ -55,7 +55,7 @@
             menuStrip1.MdiWindowListItem = WindowsMenu;
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(5, 2, 0, 2);
-            menuStrip1.Size = new Size(1273, 26);
+            menuStrip1.Size = new Size(1273, 30);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -63,7 +63,7 @@
             // 
             FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewMenu, OpenMenu });
             FileMenu.Name = "FileMenu";
-            FileMenu.Size = new Size(54, 22);
+            FileMenu.Size = new Size(54, 26);
             FileMenu.Text = "Fichier";
             // 
             // FileNewMenu
@@ -111,19 +111,19 @@
             // SymbolsMenu
             // 
             SymbolsMenu.Name = "SymbolsMenu";
-            SymbolsMenu.Size = new Size(70, 22);
+            SymbolsMenu.Size = new Size(70, 26);
             SymbolsMenu.Text = "Symboles";
             // 
             // WindowsMenu
             // 
             WindowsMenu.Name = "WindowsMenu";
-            WindowsMenu.Size = new Size(63, 22);
+            WindowsMenu.Size = new Size(63, 26);
             WindowsMenu.Text = "Fenêtres";
             // 
             // AboutMenu
             // 
             AboutMenu.Name = "AboutMenu";
-            AboutMenu.Size = new Size(92, 22);
+            AboutMenu.Size = new Size(92, 26);
             AboutMenu.Text = "A propos de...";
             // 
             // FormMain
@@ -136,6 +136,7 @@
             IsMdiContainer = true;
             MainMenuStrip = menuStrip1;
             Name = "FormMain";
+            ShowIcon = false;
             Text = "AMSTRAD CPC STUDIO";
             Load += FormMain_Load;
             ResizeEnd += FormMain_ResizeEnd;
