@@ -23,7 +23,13 @@ namespace AmstradCpcStudio.Classes
 
             // On crée un tableau des lignes de code
 
-            var lines = source.Split("\n").ToList();
+            var lines = source.Split("\r\n").ToList();
+
+            // On gère les blocs IF THEN ELSE ENDIF artificiels
+            // Modifications du code source avant traitements classiques
+
+            var r = UpdateForIfThenElseEndif(lines);
+            if (r.Status != ResultStatusEnum.Success) return r;
 
             // On ajoute les lignes et on stocke tous les labels avec la ligne qui correspond
 
@@ -161,9 +167,11 @@ namespace AmstradCpcStudio.Classes
                                 lines.Add("END");
                             }
 
+                            lines.Add($"REM IMPORT {libname}");
+
                             // On prend le code de la lib et on ajoute les lines à la fin du code actuel
 
-                            var l = libCode.Replace("\t", "").Split("\n");
+                            var l = libCode.Replace("\t", "").Split("\r\n");
 
                             for (int j = 0; j < l.Length; j++)
                             {
@@ -401,6 +409,223 @@ namespace AmstradCpcStudio.Classes
             return true;
         }
 
+        private GeneratorResult UpdateForIfThenElseEndif(List<string> lines)
+        {
+            int counter = 1;
+
+            var thenLines = new List<string>();
+            var elseLines = new List<string>();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string line = lines[i].Trim().ToUpper();
+
+                if (line.StartsWith("IF ") && line.EndsWith(" THEN"))
+                {
+                    // On a trouvé un IF qui répond au format des blocs
+                    // On par à la recherche des morceaux
+                    // avant et après ELSE et ENDIF
+
+                    int bloc = 1;
+                    bool elseZone = false;
+                    bool endifFound = false;
+
+                    for (int j = i + 1; j < lines.Count; j++)
+                    {
+                        var line2 = lines[j].Trim().ToUpper();
+
+                        if (line2.StartsWith("IF ") && line2.EndsWith(" THEN"))
+                        {
+                            // On a un sous IF, on entre dedans
+
+                            bloc++;
+
+                            // On ajoute la ligne telle qu'elle
+
+                            if (elseZone)
+                            {
+                                elseLines.Add(lines[j]);
+                            }
+                            else
+                            {
+                                thenLines.Add(lines[j]);
+                            }
+                        }
+                        else if (line2 == "ELSE")
+                        {
+                            // On a trouvé un ELSE de bloc
+                            // Si on est dans un sous bloc on n'en tient pas compte (on l'ajoute tel quel dans la zone actuelle)
+                            // Sinon on passe en zone else
+
+                            if (bloc == 1)
+                            {
+                                if (elseZone)
+                                {
+                                    // On est déjà en zone else
+                                    // On a donc plusieurs else dans le bloc IF 
+                                    // Erreur !!!!
+
+                                    return new GeneratorResult(ResultStatusEnum.DuplicateElseStatementInIfPlus, i, lines[i]);
+                                }
+                                else
+                                {
+                                    // On passe en zone else officielle
+
+                                    elseZone = true;
+                                }
+                            }
+                            else
+                            {
+                                // On est dans un sous bloc on ajoute la ligne telle qu'elle
+
+                                if (elseZone)
+                                {
+                                    elseLines.Add(lines[j]);
+                                }
+                                else
+                                {
+                                    thenLines.Add(lines[j]);
+                                }
+                            }
+                        }
+                        else if (line2 == "ENDIF")
+                        {
+                            // On a trouvé un ENDIF 
+                            // Si on est dans un sous bloc on remonte d'un bloc
+                            // Sinon on a terminé le scan des lignes
+
+                            if (bloc > 1)
+                            {
+                                // On est dans un sous bloc
+                                // On ajoute la ligne telle qu'elle
+                                // On remonte d'un bloc
+
+                                if (elseZone)
+                                {
+                                    elseLines.Add(lines[j]);
+                                }
+                                else
+                                {
+                                    thenLines.Add(lines[j]);
+                                }
+
+                                bloc -= 1;
+                            }
+                            else if (bloc == 1)
+                            {
+                                // On est au ENDIF final
+                                // On a terminé le scan et on a tout pour manipuler le code d'origine
+                                // j = position du ENDIF
+                                // i = position du IF
+
+                                endifFound = true;
+
+                                // On compose les labels des blocs then et else
+
+                                var thenLabel = $"@THEN{counter}";
+                                var elseLabel = $"@ELSE{counter}";
+
+                                // On compose la ligne unique IF avec un gosub vers les blocs then et else
+
+                                var ifLine = $"{lines[i].Trim()} GOSUB {thenLabel}";
+                                if (elseZone) ifLine += $" ELSE GOSUB {elseLabel}";
+
+                                // Si c'est le 1er IF bloc qu'on ajoute au code on ajoute un END de sécurité à la fin du code
+                                // Et on crée l'entête de la zone IF+
+
+                                if (counter == 1)
+                                {
+                                    lines.Add("");
+                                    lines.Add("END");
+                                    lines.Add("");
+
+                                    lines.Add("REM IF+ CODE");
+                                    lines.Add("");
+                                }
+
+                                // On pose le code du then
+
+                                lines.Add(thenLabel);
+                                lines.AddRange(thenLines);
+                                lines.Add("RETURN");
+
+                                // On pose le code du else s'il existe
+
+                                if (elseZone)
+                                {
+                                    lines.Add(elseLabel);
+                                    lines.AddRange(elseLines);
+                                    lines.Add("RETURN");
+                                }
+
+                                // On remplace le IF de base par le IF+
+
+                                lines[i] = ifLine;
+
+                                // On supprime toutes les lignes qui composent le IF+ (jusqu'au ENDIF inclus)
+
+                                var size = j - i;
+
+                                for (int a = 0; a < size; a++)
+                                {
+                                    lines.RemoveAt(i + 1);
+                                }
+
+                                // Fini
+                                // On relance la machine pour traiter les autres cas de IF+
+                                // On sort de la bouche interne par break
+                                // On réactive la boucle externe en affectant à i la valeur zéro
+                                // On n'oublie pas d'ajouter un au counter de IF+ traités
+                                // On vide les lignes de then et else
+
+                                thenLines.Clear();
+                                elseLines.Clear();
+                                counter += 1;
+                                i = 0;
+
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // On est dans le code du bloc IF ELSE ENDIF
+
+                            if (line2 == "RETURN" || line2.StartsWith("RETURN:") || line2.EndsWith(":RETURN"))
+                            {
+                                // On vérifie que RETURN n'est pas utilisé dans le bloc car cela foutrait en l'air la structure du IF+
+                                // C'est une limitation de cette façon de faire
+
+                                return new GeneratorResult(ResultStatusEnum.ReturnStatementNotAllowedInIfPlus, j + 1, lines[j]);
+                            }
+
+                            // Suivant la zone on ajoute la liste au bloc THEN ou au bloc ELSE
+
+                            if (elseZone)
+                            {
+                                elseLines.Add(lines[j]);
+                            }
+                            else
+                            {
+                                thenLines.Add(lines[j]);
+                            }
+                        }
+                    }
+
+                    if (!endifFound)
+                    {
+                        // On n'a as trouvé le ENDIF du bloc IF+ en cours d'analyse
+                        // Erreur !
+
+                        return new GeneratorResult(ResultStatusEnum.EndIfStatementMissingInIfPlus, 0, "EOF");
+                    }
+                }
+            }
+
+            // Fini !
+
+            return new GeneratorResult(ResultStatusEnum.Success);
+        }
+
         private class ExportLine
         {
             public int SourceLineIndex { get; set; }
@@ -431,7 +656,10 @@ namespace AmstradCpcStudio.Classes
             DuplicateDefinition,
             CallDefinitionError,
             ConstantDefinitionError,
-            DuplicateConstantDefinition
+            DuplicateConstantDefinition,
+            EndIfStatementMissingInIfPlus,
+            DuplicateElseStatementInIfPlus,
+            ReturnStatementNotAllowedInIfPlus,
         }
 
         public class GeneratorResult
@@ -475,6 +703,9 @@ namespace AmstradCpcStudio.Classes
                             ResultStatusEnum.CallDefinitionError => "Appel incorrect d'une définition.",
                             ResultStatusEnum.ConstantDefinitionError => "Erreur de définition d'une constante.",
                             ResultStatusEnum.DuplicateConstantDefinition => "Constante déjà définie avec une valeur différente.",
+                            ResultStatusEnum.DuplicateElseStatementInIfPlus => "ELSE ne peut apparaitre qu'une seule fois dans un bloc IF+",
+                            ResultStatusEnum.EndIfStatementMissingInIfPlus => "ENDIF non trouvé à la fin d'un bloc IF+",
+                            ResultStatusEnum.ReturnStatementNotAllowedInIfPlus => "RETURN non autorisé dans un bloc IF+",
                             ResultStatusEnum.None => "Aucun.",
                             _ => "Statut inconnu !"
                         };
@@ -494,6 +725,11 @@ namespace AmstradCpcStudio.Classes
                 Status = status;
                 ErrorLineNumber = errorLineNumber;
                 ErrorLineCode = errorLineCode;
+            }
+
+            public GeneratorResult(ResultStatusEnum status)
+            {
+                Status = status;
             }
 
             public GeneratorResult(string code)

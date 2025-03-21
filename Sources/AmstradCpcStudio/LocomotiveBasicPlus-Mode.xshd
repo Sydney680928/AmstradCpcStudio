@@ -149,6 +149,7 @@
 				<Key word="IF" />
 				<Key word="THEN" />
 				<Key word="ELSE" />
+				<Key word="ENDIF" />
 				<Key word="INK" />
 				<Key word="INPUT" />
 				<Key word="KEY" />
