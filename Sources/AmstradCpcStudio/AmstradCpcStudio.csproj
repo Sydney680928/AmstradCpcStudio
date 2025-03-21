@@ -7,6 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
 	<ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
+	  <VersionPrefix>0.1.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\X07-Studio\Sources\TextEditor\ICSharpCode.TextEditorEx.csproj" />
+    <ProjectReference Include="..\TextEditor\ICSharpCode.TextEditorEx.csproj" />
   </ItemGroup>
 
   <ItemGroup>

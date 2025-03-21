@@ -125,6 +125,7 @@
             AboutMenu.Name = "AboutMenu";
             AboutMenu.Size = new Size(92, 26);
             AboutMenu.Text = "A propos de...";
+            AboutMenu.Click += AboutMenu_Click;
             // 
             // FormMain
             // 

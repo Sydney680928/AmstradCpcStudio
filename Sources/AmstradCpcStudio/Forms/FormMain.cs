@@ -1,4 +1,5 @@
 using System.Drawing.Configuration;
+using x07studio.Forms;
 
 namespace AmstradCpcStudio.Forms
 {
@@ -182,6 +183,13 @@ namespace AmstradCpcStudio.Forms
                 Width = Properties.Settings.Default.FormMainWidth;
                 Height = Properties.Settings.Default.FormMainHeight;
             }
+        }
+
+        private void AboutMenu_Click(object sender, EventArgs e)
+        {
+            var f = new FormAbout();
+            f.ShowDialog(this);
+            Application.DoEvents();
         }
 
         #endregion
