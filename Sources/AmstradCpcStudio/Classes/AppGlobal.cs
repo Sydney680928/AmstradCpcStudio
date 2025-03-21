@@ -8,58 +8,52 @@ namespace AmstradCpcStudio.Classes
 {
     internal class AppGlobal
     {
-        private static string _RootFolder;
-        private static string _ProjectsFolder;
-        private static string _SourcesFolder;
-        private static string _LibrariesFolder;
-        private static string _ProgramsFolder;
-        private static string _StorageFolder;
-        private static string _AsmFolder;
-
-        private static bool _Initialized = false;
-
-        public static string RootFolder => _RootFolder;
-
-        public static string ProjectsFolder => _ProjectsFolder;
-
-        public static string SourcesFolder => _SourcesFolder;
-
-        public static string LibrarysFolder => _LibrariesFolder;
-
-        public static string ProgramsFolder => _ProgramsFolder;
-
-        public static string StorageFolder => _StorageFolder;   
-
-        public static string AsmFolder => _AsmFolder;
+        public static readonly Dictionary<string, BasicCommand> BasicCommands = new();
         
-        public static bool Initialized => _Initialized;
+        public static readonly Dictionary<string, BasicFunction> BasicFunctions = new();
 
         static AppGlobal()
         {
-            _RootFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "X07 STUDIO");
-            _ProjectsFolder = Path.Combine(_RootFolder, "PROJECTS");
-            _SourcesFolder = Path.Combine(_ProjectsFolder, "SOURCES");
-            _LibrariesFolder = Path.Combine(_ProjectsFolder, "LIBS");
-            _ProgramsFolder = Path.Combine(_RootFolder, "PROGRAMS");
-            _StorageFolder = Path.Combine(_RootFolder, "STORAGE");
-            _AsmFolder = Path.Combine(_RootFolder, "ASM");
+            // Commandes basic
 
-            try
-            {
-                //Directory.CreateDirectory(_RootFolder);
-                //Directory.CreateDirectory(_ProjectsFolder);
-                //Directory.CreateDirectory(_SourcesFolder);
-                //Directory.CreateDirectory(_LibrariesFolder);
-                //Directory.CreateDirectory(_ProgramsFolder);
-                //Directory.CreateDirectory(StorageFolder);
-                //Directory.CreateDirectory(AsmFolder);
-                
-                _Initialized = true;
-            }
-            catch
-            {
+            CreateBasicCommands();
 
-            }
+            // Fonctions basic
+
+            CreateBasicFunctions();
+
+        }
+
+        private static void CreateBasicCommands()
+        {
+            AddBasicCommand("after", "Appelle un sous-programme après qu'un certain temps se soit écoulé.", "after duration gosub @label", "after duration,timer gosub @label");
+
+            AddBasicCommand("border", "Définit la couleur de la bordure de l'écran.", "border couleur", "border couleur1,couleur2");
+
+            AddBasicCommand("call", "Appelle un sous-programme externe", "call address", "call address,param1,param2,...");
+        }
+
+        private static void CreateBasicFunctions()
+        {
+            AddBasicFunction("abs", "Retourne la valeur absolue d'un nombre.", "abs(x)");
+
+            AddBasicFunction("asc", "Retourne le valeur ASCII de la 1ère lettre d'une chaîne de caractères.", "asc(\"xyz\")");
+
+            AddBasicFunction("atn", "Retourne l'Arc Tangente d'un angle.", "atn(x)");
+
+            AddBasicFunction("bin$", "Retourne la conversion en binaire d'un nombre.", "bin$(value)", "bin$(value, size)");
+        }
+
+        private static void AddBasicCommand(string name, string description, params string[] samples)
+        {
+            var command = new BasicCommand(name, description, samples);
+            BasicCommands[name] = command;  
+        }
+
+        private static void AddBasicFunction(string name, string description, params string[] samples)
+        {
+            var function = new BasicFunction(name, description, samples);
+            BasicFunctions[name] = function;
         }
     }
 }

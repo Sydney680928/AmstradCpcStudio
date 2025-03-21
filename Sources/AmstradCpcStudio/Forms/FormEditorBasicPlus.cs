@@ -199,6 +199,11 @@ namespace AmstradCpcStudio.Forms
             }
         }
 
+        private void FilePrintMenu_Click(object sender, EventArgs e)
+        {
+            FormMain.Default.PrintDocument(CodeEditor);
+        }
+
         #endregion
     }
 }

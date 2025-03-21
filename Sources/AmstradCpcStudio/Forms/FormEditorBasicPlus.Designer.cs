@@ -35,6 +35,7 @@
             FileSaveAsMenu = new ToolStripMenuItem();
             GenerateMenu = new ToolStripMenuItem();
             CodeEditor = new ICSharpCode.TextEditor.TextEditorControl();
+            FilePrintMenu = new ToolStripMenuItem();
             menuStrip1 = new MenuStrip();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -54,7 +55,7 @@
             // 
             // FileMenu
             // 
-            FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileSaveMenu, FileSaveAsMenu });
+            FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileSaveMenu, FileSaveAsMenu, FilePrintMenu });
             FileMenu.Name = "FileMenu";
             FileMenu.Size = new Size(54, 26);
             FileMenu.Text = "Fichier";
@@ -62,14 +63,14 @@
             // FileSaveMenu
             // 
             FileSaveMenu.Name = "FileSaveMenu";
-            FileSaveMenu.Size = new Size(166, 22);
+            FileSaveMenu.Size = new Size(180, 22);
             FileSaveMenu.Text = "Enregistrer";
             FileSaveMenu.Click += FileSaveMenu_Click;
             // 
             // FileSaveAsMenu
             // 
             FileSaveAsMenu.Name = "FileSaveAsMenu";
-            FileSaveAsMenu.Size = new Size(166, 22);
+            FileSaveAsMenu.Size = new Size(180, 22);
             FileSaveAsMenu.Text = "Enregistrer sous...";
             FileSaveAsMenu.Click += FileSaveAsMenu_Click;
             // 
@@ -93,6 +94,13 @@
             CodeEditor.TabIndex = 1;
             CodeEditor.VRulerRow = 255;
             CodeEditor.TextChanged += CodeEditor_TextChanged;
+            // 
+            // FilePrintMenu
+            // 
+            FilePrintMenu.Name = "FilePrintMenu";
+            FilePrintMenu.Size = new Size(180, 22);
+            FilePrintMenu.Text = "Imprimer";
+            FilePrintMenu.Click += FilePrintMenu_Click;
             // 
             // FormEditorBasicPlus
             // 
@@ -124,5 +132,6 @@
         private ToolStripMenuItem FileSaveAsMenu;
         private ICSharpCode.TextEditor.TextEditorControl CodeEditor;
         private ToolStripMenuItem GenerateMenu;
+        private ToolStripMenuItem FilePrintMenu;
     }
 }

@@ -1,3 +1,4 @@
+using ICSharpCode.TextEditor;
 using System.Drawing.Configuration;
 using x07studio.Forms;
 
@@ -5,6 +6,10 @@ namespace AmstradCpcStudio.Forms
 {
     public partial class FormMain : Form
     {
+        private static FormMain _Default = new FormMain();
+
+        public static FormMain Default => _Default;
+
         public FormMain()
         {
             InitializeComponent();
@@ -18,6 +23,25 @@ namespace AmstradCpcStudio.Forms
                 }
             }
         }
+
+        public bool PrintDocument(TextEditorControl editor)
+        {
+            PrintDialog printDialog = new PrintDialog();
+            printDialog.Document = editor.PrintDocument;
+            printDialog.UseEXDialog = true;
+
+            var r = printDialog.ShowDialog();
+
+            if (r == DialogResult.OK)
+            {
+                editor.PrintDocument.PrinterSettings = printDialog.PrinterSettings;
+                editor.PrintDocument.Print();
+                return true;
+            }
+
+            return false;
+        }
+
 
         private bool OpenBasicPlusFile()
         {
