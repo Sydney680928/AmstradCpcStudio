@@ -2,6 +2,7 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -25,10 +26,15 @@ namespace AmstradCpcStudio.Classes
 
             var lines = source.Split("\r\n").ToList();
 
+            // On gère les SUB...ENDSUB
+
+            var r = UpdateForSub(lines);
+            if (r.Status != ResultStatusEnum.Success) return r;
+
             // On gère les blocs IF THEN ELSE ENDIF artificiels
             // Modifications du code source avant traitements classiques
 
-            var r = UpdateForIfThenElseEndif(lines);
+            r = UpdateForIfThenElseEndif(lines);
             if (r.Status != ResultStatusEnum.Success) return r;
 
             // On ajoute les lignes et on stocke tous les labels avec la ligne qui correspond
@@ -387,12 +393,9 @@ namespace AmstradCpcStudio.Classes
             return true;
         }
 
-        private bool IsDefinitionNameValid(string constName)
+        private bool IsSubNameValid(string constName)
         {
             // Composé des lettres A...Z, a...z, 0...9, _, -, . uniquement
-            // Se termine par () obligatoirement
-
-            if (constName.Length < 3 || !constName.EndsWith("()")) return false;
 
             foreach (var c in constName.Substring(0, constName.Length - 2))
             {
@@ -407,6 +410,95 @@ namespace AmstradCpcStudio.Classes
             }
 
             return true;
+        }
+
+        private GeneratorResult UpdateForSub(List<string> lines)
+        {
+            // On part à la recherche d'une ligne qui commence par SUB et qui se termine obligatoirement par un ]
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+
+                if (line.ToUpper().StartsWith("SUB ") && line.EndsWith("]"))
+                {
+                    // On a une SUB
+                    // Le format doit être SUB NomDeLaSub[p1,p2,....,pn]
+                    // Où p1...pn sont les paramètres de la SUB
+
+                    // On par à la recherche du nom de la SUB
+
+                    var sb = new StringBuilder();
+                    var subName = string.Empty;
+
+                    for (int j = 4; j < line.Length; j++)
+                    {
+                        var c = line[j];
+
+                        if (c != '[')
+                        {
+                            sb.Append(c);
+                        }
+                        else
+                        {
+                            subName = sb.ToString();
+
+                            // On vérifie que le nom est ok
+
+                            if (!IsSubNameValid(subName)) return new GeneratorResult(ResultStatusEnum.DefinitionError, i, line);
+
+                            // On récupère les paramètres
+
+                            var sp = line.Substring(j + 1, line.Length - j - 2);
+
+                            // On décompose les paramètres en une liste de noms de paramètres
+
+                            var subParams = DispatchSubParameters(sp);
+                            if (subParams == null) return new GeneratorResult(ResultStatusEnum.DefinitionError, i, line);
+
+                            break;
+                        }              
+                    }
+                }
+            }
+
+            return new GeneratorResult(ResultStatusEnum.Success);
+        }
+
+        private string[]? DispatchSubParameters(string p)
+        {
+            // Les paramètres sont des noms de variables avec leur type
+            // Les valeurs (chaînes,nombres) sont interdits
+
+            var parameters = p.Split(',');
+
+            // On vérifie que chaque item est conforme
+            // Types autorisés $ ! %
+
+            foreach (var item in parameters)
+            {
+                // Le 1er caractère doit être une lettre A..Z ou a..z
+
+                var c1 = item.ToUpper()[0];
+                if (c1 < 'A' || c1 > 'Z') return null;
+
+                // Les caractères suivants (sauf le dernier) peuvent être des lettres ou des chiffres
+
+                for (var i =1; i < item.Length - 1; i++)
+                {
+                    var cn = item.ToUpper()[i];
+                    var valid = (cn >= 'A' && cn <= 'Z' || cn >= '0' && cn <= '9');
+                    if (!valid) return null;
+
+                }
+
+                // Le dernier caractère peut être une lettre ou un chiffre ou % ou ! ou $
+
+                var cf = item.ToUpper()[item.Length - 1];
+                if (!(cf >= 'A' && cf <= 'Z' || cf >= '0' && cf <= '9' || cf == '%' || cf == '!' || cf == '$')) return null;
+            }
+
+            return parameters;
         }
 
         private GeneratorResult UpdateForIfThenElseEndif(List<string> lines)
