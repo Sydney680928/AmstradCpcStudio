@@ -33,9 +33,10 @@
             FileMenu = new ToolStripMenuItem();
             FileSaveMenu = new ToolStripMenuItem();
             FileSaveAsMenu = new ToolStripMenuItem();
+            FilePrintMenu = new ToolStripMenuItem();
+            KeywordsMenu = new ToolStripMenuItem();
             GenerateMenu = new ToolStripMenuItem();
             CodeEditor = new ICSharpCode.TextEditor.TextEditorControl();
-            FilePrintMenu = new ToolStripMenuItem();
             menuStrip1 = new MenuStrip();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -45,7 +46,7 @@
             menuStrip1.AutoSize = false;
             menuStrip1.BackColor = Color.FromArgb(204, 213, 240);
             menuStrip1.ImageScalingSize = new Size(20, 20);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { FileMenu, GenerateMenu });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { FileMenu, KeywordsMenu, GenerateMenu });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(5, 2, 0, 2);
@@ -63,16 +64,30 @@
             // FileSaveMenu
             // 
             FileSaveMenu.Name = "FileSaveMenu";
-            FileSaveMenu.Size = new Size(180, 22);
+            FileSaveMenu.Size = new Size(166, 22);
             FileSaveMenu.Text = "Enregistrer";
             FileSaveMenu.Click += FileSaveMenu_Click;
             // 
             // FileSaveAsMenu
             // 
             FileSaveAsMenu.Name = "FileSaveAsMenu";
-            FileSaveAsMenu.Size = new Size(180, 22);
+            FileSaveAsMenu.Size = new Size(166, 22);
             FileSaveAsMenu.Text = "Enregistrer sous...";
             FileSaveAsMenu.Click += FileSaveAsMenu_Click;
+            // 
+            // FilePrintMenu
+            // 
+            FilePrintMenu.Name = "FilePrintMenu";
+            FilePrintMenu.Size = new Size(166, 22);
+            FilePrintMenu.Text = "Imprimer";
+            FilePrintMenu.Click += FilePrintMenu_Click;
+            // 
+            // KeywordsMenu
+            // 
+            KeywordsMenu.Name = "KeywordsMenu";
+            KeywordsMenu.Size = new Size(69, 26);
+            KeywordsMenu.Text = "Mots clés";
+            KeywordsMenu.Click += KeywordsMenu_Click;
             // 
             // GenerateMenu
             // 
@@ -94,13 +109,6 @@
             CodeEditor.TabIndex = 1;
             CodeEditor.VRulerRow = 255;
             CodeEditor.TextChanged += CodeEditor_TextChanged;
-            // 
-            // FilePrintMenu
-            // 
-            FilePrintMenu.Name = "FilePrintMenu";
-            FilePrintMenu.Size = new Size(180, 22);
-            FilePrintMenu.Text = "Imprimer";
-            FilePrintMenu.Click += FilePrintMenu_Click;
             // 
             // FormEditorBasicPlus
             // 
@@ -133,5 +141,6 @@
         private ICSharpCode.TextEditor.TextEditorControl CodeEditor;
         private ToolStripMenuItem GenerateMenu;
         private ToolStripMenuItem FilePrintMenu;
+        private ToolStripMenuItem KeywordsMenu;
     }
 }

@@ -29,6 +29,10 @@ namespace AmstradCpcStudio.Forms
                 CodeEditor.SetHighlighting("LocomotiveBasicPlus");
             }
 
+            // Folding
+
+            CodeEditor.Document.FoldingManager.FoldingStrategy = new BasicPlusFolding();
+
             // Intégration du fichier de code
 
             CurrentFilename = filename;
@@ -137,12 +141,13 @@ namespace AmstradCpcStudio.Forms
 
         private void CodeEditor_TextChanged(object sender, EventArgs e)
         {
+            CodeEditor.Document.FoldingManager.UpdateFoldings(null, null);
+
             if (!_CodeIsModified)
             {
                 _CodeIsModified = true;
                 UpdateFormTitle();
             }
-
         }
 
         private void GenerateMenu_Click(object sender, EventArgs e)
@@ -202,6 +207,53 @@ namespace AmstradCpcStudio.Forms
         private void FilePrintMenu_Click(object sender, EventArgs e)
         {
             FormMain.Default.PrintDocument(CodeEditor);
+        }
+
+        private void KeywordsMenu_Click(object sender, EventArgs e)
+        {
+            using var f = new BasicKeywordsForm();
+            var r = f.ShowDialog(this);
+            Application.DoEvents();
+
+            if (r == DialogResult.OK)
+            {
+                CodeEditor.ActiveTextAreaControl.TextArea.InsertString(f.SampleSelected);
+                CodeEditor.Focus();
+            }
+        }
+
+        #endregion
+
+        #region CLASSES
+
+        public class BasicPlusFolding : IFoldingStrategy
+        {
+            public List<FoldMarker> GenerateFoldMarkers(IDocument document, string fileName, object parseInformation)
+            {
+                List<FoldMarker> list = new List<FoldMarker>();
+
+                int start = 0;
+
+                // Create foldmarkers for the whole document, enumerate through every line.
+
+                for (int i = 0; i < document.TotalNumberOfLines; i++)
+                {
+                    // Get the text of current line.
+
+                    string text = document.GetText(document.GetLineSegment(i));
+
+                    if (text.StartsWith("// region"))
+                    {
+                        start = i;
+                    }
+                    else if (text.StartsWith("// end region"))
+                    {
+                        list.Add(new FoldMarker(document, start, document.GetLineSegment(start).Length, i, 8));
+                    }
+                }
+
+                return list;
+            }
         }
 
         #endregion

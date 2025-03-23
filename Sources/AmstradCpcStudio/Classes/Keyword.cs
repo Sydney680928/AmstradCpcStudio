@@ -20,5 +20,10 @@ namespace AmstradCpcStudio.Classes
             Description = description;
             Samples = sample;
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
