@@ -2,6 +2,7 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
@@ -530,6 +531,7 @@ namespace AmstradCpcStudio.Classes
 
                     lines.Add("END");
                     lines.Add($"REM SUB {subDefinition.Name}");
+                    lines.Add(subDefinition.LabelName);
 
                     for (var b = 0; b < subDefinition.Body.Count; b++)
                     {
@@ -545,9 +547,81 @@ namespace AmstradCpcStudio.Classes
 
                     lines.Add("RETURN");
 
-                    // On enlève les lignes de défintion de la SUB
+                    // On enlève les lignes de définition de la SUB dans le code d'origine
 
+                    for (int b = 0; b < subDefinition.Body.Count + 2; b++)
+                    {
+                        lines.RemoveAt(subStartLine);
+                    }
 
+                    // On se replace au début du code pour chercher la SUB suivante
+
+                    i = subStartLine - 1;
+
+                    subStartLine = 0;
+                    subEndLine = 0;
+                    subName = string.Empty;
+                    subParams = new();
+                    subBody = new();             
+                }
+            }
+
+            // On a fait le tour de toutes les SUB présentes
+            // Pour chacune on part à la recherche des appels pour les transformer 
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                foreach (var sub in subDefinitions.Values)
+                {
+                    while (true)
+                    {
+                        var line = lines[i];
+
+                        var k = line.IndexOf(sub.StartSubCallName);
+
+                        if (k == -1)
+                        {
+                            // Aucun appel à cette SUB sur cette ligne
+                            // On sort du while
+
+                            break;
+                        }
+                        else
+                        {
+                            // On récupère les valeurs de paramètres et la position de la fin de l'appel "]"
+
+                            var callCode = DispatchSubCallCode(sub, line, k);
+
+                            // Si les valeurs retournées ne sont pas au bon nombre, erreur (trop ou pas assez de paramètres passés)
+
+                            if (callCode.values.Count != sub.Parameters.Count) return new GeneratorResult(ResultStatusEnum.WrongNumberSubParameters, i + 1, line);
+     
+                            // On doit créer un bloc d'appel pour cet appel dans lequel les variables locales sont affectées et la SUB appelée
+
+                            sub.CallCounter += 1;
+
+                            lines.Add($"REM SUB {sub.Name} CALL {sub.CallCounter}");
+
+                            lines.Add($"{sub.StartCallName}{sub.CallCounter}");
+                            
+                            for (int p = 0; p < sub.Parameters.Count; p++)
+                            {
+                                lines.Add($"{sub.StartParameterName}{sub.Parameters[p]}={callCode.values[p]}");
+                            }
+
+                            lines.Add($"gosub {sub.LabelName}");
+                            lines.Add("return");
+
+                            // On remplace l'appel SUB par l'appel GOSUB
+
+                            var startLine = string.Empty;
+                            if (k > 0) startLine = line.Substring(0, k - 1);
+
+                            var endLine = line.Substring(callCode.endPosition + 1);
+
+                            lines[i] = $"{startLine}gosub {sub.StartCallName}{sub.CallCounter}{endLine}";
+                        }
+                    }
                 }
             }
 
@@ -588,6 +662,120 @@ namespace AmstradCpcStudio.Classes
             }
 
             return parameters.ToList();
+        }
+
+        private (List<string> values, int endPosition) DispatchSubCallCode(SubDefinition subDefinition, string  line, int startPosition)
+        {
+            var values = new List<string>();
+            var expressionStep = 0;
+            var inString = false;
+            var currentValue = new StringBuilder();
+            var endPosition = 0;
+
+            var k = startPosition + subDefinition.Name.Length + 1;
+
+            for (int i = k; i < line.Length; i++)
+            {
+                var c = line[i];
+
+                if (c == '"')
+                {
+                    // Si valeur vide c'est le début d'une chaine
+                    // Si valeur non vide et 1er caractère = " alors c'est la fin de la chaine
+                    
+                    if (currentValue.Length == 0)
+                    {
+                        // Début de chaine
+
+                        inString = true;
+                        currentValue.Append(c);
+                    }
+                    else if (currentValue[0] == '"')
+                    {
+                        // Fin de chaine
+
+                        inString = false;
+                        currentValue.Append(c);
+                        values.Add(currentValue.ToString().Trim());
+                        currentValue.Clear();
+                    }
+                    else
+                    {
+                        // Guillemet dans une expression
+
+                        currentValue.Append(c);
+                    }
+                }
+                else if (c == '(')
+                {
+                    // On entre dans une expression
+                    // Si on rencontre une , dans une expression alors elle ne sera pas condidérée comme un séparateur de valeur mais faisant partie de l'expression
+
+                    expressionStep += 1;
+                    currentValue.Append(c); 
+                }
+                else if (c == ')')
+                {
+                    // On sort d'une expression
+
+                    expressionStep -= 1;
+                    currentValue.Append(c);
+                }
+                else if (c == ',')
+                {
+                    if (expressionStep == 0 && !inString)
+                    {
+                        // On n'est pas dans une expression
+                        // Ni dans une chaine
+                        // C'est un séparateur de paramètre
+
+                        if (currentValue.Length > 0)
+                        {
+                            values.Add((string)currentValue.ToString().Trim());
+                            currentValue.Clear();
+                        }
+                    }
+                    else
+                    {
+                        // La virgule fait partie de la valeur
+
+                        currentValue.Append(c);
+                    }
+                }
+                else if (c == ']')
+                {
+                    // On est à la fin de la SUB
+                    // Sauf si on est déjà dans une chaine
+
+                    if (inString)
+                    {
+                        currentValue.Append((string)currentValue.ToString());   
+                    }
+                    else
+                    {
+                        // Fin finale !
+
+                        if (currentValue.Length > 0)
+                        {
+                            values.Add((string)currentValue.ToString().Trim());    
+                            currentValue.Clear();
+                        }
+
+                        endPosition = i;
+
+                        break;
+                    }
+                }
+                else
+                {
+                    // Rien de spécial
+                    // On prend
+
+                    currentValue.Append(c);
+                }
+            }
+
+            return (values, endPosition);
         }
 
         private GeneratorResult UpdateForIfThenElseEndif(List<string> lines)
@@ -843,7 +1031,8 @@ namespace AmstradCpcStudio.Classes
             ReturnStatementNotAllowedInIfPlus,
             DuplicateSubDefinition,
             SubDefinitionError,
-            EndSubStatementMissingInSub
+            EndSubStatementMissingInSub,
+            WrongNumberSubParameters
         }
 
         public class GeneratorResult
@@ -893,6 +1082,7 @@ namespace AmstradCpcStudio.Classes
                             ResultStatusEnum.DuplicateSubDefinition => "SUB définie plusieurs fois",
                             ResultStatusEnum.SubDefinitionError => "Définition d'une SUB non valide",
                             ResultStatusEnum.EndSubStatementMissingInSub => "ENDSUB non trouvé à la fin d'une SUB",
+                            ResultStatusEnum.WrongNumberSubParameters => "Nombre de paramètres incorrects lors de l'appel d'une SUB",
                             ResultStatusEnum.None => "Aucun.",
                             _ => "Statut inconnu !"
                         };
@@ -1155,11 +1345,15 @@ namespace AmstradCpcStudio.Classes
 
             public List<string> Body { get; init; }
 
-            public string LabelName => $"SUB.{Name}";
+            public string LabelName => $"@SUB.{Name}";
 
-            public string StartParameterName => $"{LabelName}.p.";
+            public string StartParameterName => $"SUB.{Name}.p.";
 
-            public string StartCallName => "${LabelName}.call.";
+            public string StartCallName => $"{LabelName}.call.";
+
+            public string StartSubCallName => $"{Name}[";
+
+            public int CallCounter { get; set; }
 
             public SubDefinition(string name, List<string> parameters, List<string> body)
             {
