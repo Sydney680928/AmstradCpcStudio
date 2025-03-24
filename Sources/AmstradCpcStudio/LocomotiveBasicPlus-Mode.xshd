@@ -110,6 +110,8 @@
 			</Span>
 
 			<KeyWords name="commands_uppercase" bold="false" italic="false" color="Blue">
+				<Key word="SUB" />
+				<Key word="ENDSUB" />
 				<Key word="AFTER" />
 				<Key word="AUTO" />
 				<Key word="BORDER" />

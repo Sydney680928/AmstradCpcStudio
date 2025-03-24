@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,9 +27,108 @@ namespace AmstradCpcStudio.Classes
 
             var lines = source.Split("\r\n").ToList();
 
+            // On inclut les IMPORTS
+
+            List<string> imports = new();
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+
+                if (line.StartsWith("#IMPORT "))
+                {
+                    // On est en face d'une ligne d'import 
+                    // #IMPORT PATH FICHIER LIB
+
+                    // On se place dans le dossier du code source
+                    // Si impossible erreur
+
+                    try
+                    {
+                        var path = Path.GetDirectoryName(filename);
+                        Directory.SetCurrentDirectory(path ?? "");
+                    }
+                    catch
+                    {
+                        return new GeneratorResult(ResultStatusEnum.UnabledToDefineCurrentDirectory, i + 1, line);
+                    }
+
+                    var libname = line.Substring(8);
+
+                    if (imports.Contains(libname))
+                    {
+                        // Cette lib a déjà été importée
+                        // Pour le moment on laisse faire
+                        // Une lib peut être demandée dans plusieurs libs en cascade
+                    }
+                    else
+                    {
+                        if (!File.Exists(libname))
+                        {
+                            // Le fichier n'existe pas !
+
+                            return new GeneratorResult(ResultStatusEnum.LibraryNotFound, i + 1, line);
+                        }
+
+                        // On charge le code de la lib
+
+                        string? libCode = null;
+
+                        try
+                        {
+                            using var reader = new StreamReader(libname);
+                            libCode = reader.ReadToEnd();
+                            reader.Close();
+                        }
+                        catch
+                        {
+                            // Impossible de charger le code de la lib !
+
+                            return new GeneratorResult(ResultStatusEnum.LibraryLoadError, i + 1, line);
+                        }
+
+                        if (string.IsNullOrEmpty(libCode))
+                        {
+                            // lib vide !
+
+                            return new GeneratorResult(ResultStatusEnum.LibraryIsEmpty, i + 1, line);
+                        }
+
+                        // Si c'est la 1ère lib qu'on importe on ajoute un END de sécurité juste avant
+
+                        if (imports.Count == 0)
+                        {
+                            lines.Add("END");
+                        }
+
+                        lines.Add($"REM IMPORT {libname}");
+
+                        // On prend le code de la lib et on ajoute les lines à la fin du code actuel
+
+                        var l = libCode.Replace("\t", "").Split("\r\n");
+
+                        for (int j = 0; j < l.Length; j++)
+                        {
+                            lines.Add(l[j]);
+                        }
+
+                        // On référence la lib pour ne pas l'utiliser plusieurs fois
+
+                        imports.Add(libname);
+
+                        // On supprime la ligne d'import qu'on vient de traiter
+
+                        lines.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+            }
+
             // On gère les SUB...ENDSUB
 
-            var r = UpdateForSub(lines);
+            var SubDefinitions = new Dictionary<string, SubDefinition>();
+
+            var r = UpdateForSub(lines, SubDefinitions);
             if (r.Status != ResultStatusEnum.Success) return r;
 
             // On gère les blocs IF THEN ELSE ENDIF artificiels
@@ -43,8 +143,7 @@ namespace AmstradCpcStudio.Classes
             var defs = new Dictionary<string, Definition>();
             var consts = new Dictionary<string, string>();
             int numLine;
-            List<ExportLine> exports = new();
-            List<string> imports = new();
+            List<ExportLine> exports = new();           
 
             numLine = 90;
 
@@ -107,87 +206,6 @@ namespace AmstradCpcStudio.Classes
 
                         labels[line] = numLine + 10;
                         Debug.WriteLine($"LABEL {line} FOUND AT {numLine + 10}");
-                    }
-                    else if (line.StartsWith("#IMPORT "))
-                    {
-                        // On est en face d'une ligne d'import 
-                        // #IMPORT PATH FICHIER LIB
-
-                        // On se place dans le dossier du code source
-                        // Si impossible erreur
-
-                        try
-                        {
-                            var path = Path.GetDirectoryName(filename);
-                            Directory.SetCurrentDirectory(path ?? "");
-                        }
-                        catch
-                        {
-                            return new GeneratorResult(ResultStatusEnum.UnabledToDefineCurrentDirectory, lineNumber, line);
-                        }
-
-                        var libname = line.Substring(8);
-
-                        if (imports.Contains(libname))
-                        {
-                            // Cette lib a déjà été importée
-                            // Pour le moment on laisse faire
-                            // Une lib peut être demandée dans plusieurs libs en cascade
-                        }
-                        else
-                        {
-                            if (!File.Exists(libname))
-                            {
-                                // Le fichier n'existe pas !
-
-                                return new GeneratorResult(ResultStatusEnum.LibraryNotFound, lineNumber, line);
-                            }
-
-                            // On charge le code de la lib
-
-                            string? libCode = null;
-
-                            try
-                            {
-                                var reader = new StreamReader(libname);
-                                libCode = reader.ReadToEnd();
-                            }
-                            catch
-                            {
-                                // Impossible de charger le code de la lib !
-
-                                return new GeneratorResult(ResultStatusEnum.LibraryLoadError, lineNumber, line);
-                            }                       
-
-                            if (string.IsNullOrEmpty(libCode))
-                            {
-                                // lib vide !
-
-                                return new GeneratorResult(ResultStatusEnum.LibraryIsEmpty, lineNumber, line);
-                            }
-
-                            // Si c'est la 1ère lib qu'on importe on ajoute un END de sécurité juste avant
-
-                            if (imports.Count == 0)
-                            {
-                                lines.Add("END");
-                            }
-
-                            lines.Add($"REM IMPORT {libname}");
-
-                            // On prend le code de la lib et on ajoute les lines à la fin du code actuel
-
-                            var l = libCode.Replace("\t", "").Split("\r\n");
-
-                            for (int j = 0; j < l.Length; j++)
-                            {
-                                lines.Add(l[j]);
-                            }
-
-                            // On référence la lib pour ne pas l'utiliser plusieurs fois
-
-                            imports.Add(libname);
-                        }
                     }
                     else if (line.StartsWith("#DEF "))
                     {
@@ -412,25 +430,34 @@ namespace AmstradCpcStudio.Classes
             return true;
         }
 
-        private GeneratorResult UpdateForSub(List<string> lines)
+        private GeneratorResult UpdateForSub(List<string> lines, Dictionary<string, SubDefinition> subDefinitions)
         {
+            int subStartLine;
+            int subEndLine;
+            var subName = string.Empty;
+            var subParams = new List<string>();
+            var subBody = new List<string>();
+
             // On part à la recherche d'une ligne qui commence par SUB et qui se termine obligatoirement par un ]
 
             for (int i = 0; i < lines.Count; i++)
             {
                 var line = lines[i].Trim();
 
-                if (line.ToUpper().StartsWith("SUB ") && line.EndsWith("]"))
+                if (line.ToUpper().StartsWith("SUB "))
                 {
                     // On a une SUB
                     // Le format doit être SUB NomDeLaSub[p1,p2,....,pn]
                     // Où p1...pn sont les paramètres de la SUB
 
+                    if (!line.EndsWith("]")) return new GeneratorResult(ResultStatusEnum.SubDefinitionError, i + 1, line);
+
+                    subStartLine = i;
+
                     // On par à la recherche du nom de la SUB
 
                     var sb = new StringBuilder();
-                    var subName = string.Empty;
-
+                 
                     for (int j = 4; j < line.Length; j++)
                     {
                         var c = line[j];
@@ -445,7 +472,11 @@ namespace AmstradCpcStudio.Classes
 
                             // On vérifie que le nom est ok
 
-                            if (!IsSubNameValid(subName)) return new GeneratorResult(ResultStatusEnum.DefinitionError, i, line);
+                            if (!IsSubNameValid(subName)) return new GeneratorResult(ResultStatusEnum.SubDefinitionError, i + 1, line);
+
+                            // On vérifie que la SUB n'existe pas déjà
+
+                            if (subDefinitions.ContainsKey(subName)) return new GeneratorResult(ResultStatusEnum.DuplicateSubDefinition, i + 1, line);
 
                             // On récupère les paramètres
 
@@ -453,19 +484,77 @@ namespace AmstradCpcStudio.Classes
 
                             // On décompose les paramètres en une liste de noms de paramètres
 
-                            var subParams = DispatchSubParameters(sp);
-                            if (subParams == null) return new GeneratorResult(ResultStatusEnum.DefinitionError, i, line);
+                            subParams = DispatchSubParameters(sp);
+                            if (subParams == null) return new GeneratorResult(ResultStatusEnum.SubDefinitionError, i, line);
+
+                            // On a le nom et les paramètres
 
                             break;
                         }              
                     }
+
+                    // On récupère le corps de la SUB
+                    // Il commence après la ligne SUB et se termine à ENDSUB
+
+                    var endSubFound = false;
+
+                    for (int j = subStartLine + 1; j < lines.Count; j++)
+                    {
+                        var subLine = lines[j].Trim();
+
+                        if (subLine.ToUpper() == "ENDSUB")
+                        {
+                            // Fin de la sub
+
+                            endSubFound = true;
+                            subEndLine = j;
+                            break;
+                        }
+                        else
+                        {
+                            subBody.Add(lines[j]);
+                        }
+                    }
+
+                    if (!endSubFound) return new GeneratorResult(ResultStatusEnum.EndSubStatementMissingInSub, subStartLine + 1, lines[subStartLine].Trim());
+
+                    // On a tous les éléments pour prendre en compte cette SUB
+                    // On l'ajoute aux SUB déjà prises en compte
+
+                    var subDefinition = new SubDefinition(subName, subParams, subBody);
+                    subDefinitions[subName] = subDefinition;
+
+                    // On ajoute à la fin du code le label correspondant à cette SUB
+                    // Le label = "@SUB." + subName
+                    // On modifie le body pour que les paramètres possèdent leur nom final complet "SUB." + subName + "p." + paramName
+
+                    lines.Add("END");
+                    lines.Add($"REM SUB {subDefinition.Name}");
+
+                    for (var b = 0; b < subDefinition.Body.Count; b++)
+                    {
+                        var bodyLine = subDefinition.Body[b];
+                        
+                        foreach (var param in subDefinition.Parameters)
+                        {
+                            bodyLine = bodyLine.Replace(param, $"{subDefinition.StartParameterName}{param}");
+                        }
+
+                        lines.Add(bodyLine);
+                    }
+
+                    lines.Add("RETURN");
+
+                    // On enlève les lignes de défintion de la SUB
+
+
                 }
             }
 
             return new GeneratorResult(ResultStatusEnum.Success);
         }
 
-        private string[]? DispatchSubParameters(string p)
+        private List<string>? DispatchSubParameters(string p)
         {
             // Les paramètres sont des noms de variables avec leur type
             // Les valeurs (chaînes,nombres) sont interdits
@@ -498,7 +587,7 @@ namespace AmstradCpcStudio.Classes
                 if (!(cf >= 'A' && cf <= 'Z' || cf >= '0' && cf <= '9' || cf == '%' || cf == '!' || cf == '$')) return null;
             }
 
-            return parameters;
+            return parameters.ToList();
         }
 
         private GeneratorResult UpdateForIfThenElseEndif(List<string> lines)
@@ -752,6 +841,9 @@ namespace AmstradCpcStudio.Classes
             EndIfStatementMissingInIfPlus,
             DuplicateElseStatementInIfPlus,
             ReturnStatementNotAllowedInIfPlus,
+            DuplicateSubDefinition,
+            SubDefinitionError,
+            EndSubStatementMissingInSub
         }
 
         public class GeneratorResult
@@ -798,6 +890,9 @@ namespace AmstradCpcStudio.Classes
                             ResultStatusEnum.DuplicateElseStatementInIfPlus => "ELSE ne peut apparaitre qu'une seule fois dans un bloc IF+",
                             ResultStatusEnum.EndIfStatementMissingInIfPlus => "ENDIF non trouvé à la fin d'un bloc IF+",
                             ResultStatusEnum.ReturnStatementNotAllowedInIfPlus => "RETURN non autorisé dans un bloc IF+",
+                            ResultStatusEnum.DuplicateSubDefinition => "SUB définie plusieurs fois",
+                            ResultStatusEnum.SubDefinitionError => "Définition d'une SUB non valide",
+                            ResultStatusEnum.EndSubStatementMissingInSub => "ENDSUB non trouvé à la fin d'une SUB",
                             ResultStatusEnum.None => "Aucun.",
                             _ => "Statut inconnu !"
                         };
@@ -1049,6 +1144,28 @@ namespace AmstradCpcStudio.Classes
                 }
 
                 return newLine;
+            }
+        }
+
+        public class SubDefinition
+        {
+            public string Name { get; init; }
+
+            public List<string> Parameters { get; init; }    
+
+            public List<string> Body { get; init; }
+
+            public string LabelName => $"SUB.{Name}";
+
+            public string StartParameterName => $"{LabelName}.p.";
+
+            public string StartCallName => "${LabelName}.call.";
+
+            public SubDefinition(string name, List<string> parameters, List<string> body)
+            {
+                Name = name;    
+                Parameters = parameters;
+                Body = body;    
             }
         }
     }
