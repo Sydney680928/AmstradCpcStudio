@@ -39,7 +39,7 @@ namespace AmstradCpcStudio.Classes
                 if (line.StartsWith("#IMPORT "))
                 {
                     // On est en face d'une ligne d'import 
-                    // #IMPORT PATH FICHIER LIB
+                    // #IMPORT PATH
 
                     // On se place dans le dossier du code source
                     // Si impossible erreur
@@ -325,19 +325,34 @@ namespace AmstradCpcStudio.Classes
                 }
             }
 
-            // On trie les labels du plus grand au plus petit
+            // On trie les labels de la longueur la plus grande à la plus petite
 
             var labelKeys = labels.Keys.ToList();
-            int labelSort(string l1, string l2) => l2.CompareTo(l1);
+            
+            int labelSort(string l1, string l2)
+            {
+                if (l1.Length == l2.Length) return 0;
+                
+                if (l1.Length > l2.Length) return -1;
+                
+                return 1;
+            };
+            
             labelKeys.Sort(labelSort);
 
             // On remplace les labels dans les lignes par leur numéro de ligne
 
-            for (int i = 0; i < exports.Count; i++)
+            for (var j = 0; j < labelKeys.Count; j++)
             {
-                foreach (var key in labelKeys)
+                var key = labelKeys[j];
+                var nl = labels[key].ToString();
+
+                for (int i = 0; i < exports.Count; i++)
                 {
-                    exports[i].BasicLine = exports[i].BasicLine.Replace(key, labels[key].ToString());
+                    if (exports[i].BasicLine.Contains(key))
+                    {
+                        exports[i].BasicLine = exports[i].BasicLine.Replace(key, nl);
+                    }
                 }
             }
 
@@ -503,7 +518,7 @@ namespace AmstradCpcStudio.Classes
                     {
                         var subLine = lines[j].Trim();
 
-                        if (subLine.ToUpper() == "ENDSUB")
+                        if (subLine.ToUpper() == "END SUB")
                         {
                             // Fin de la sub
 
@@ -539,7 +554,10 @@ namespace AmstradCpcStudio.Classes
                         
                         foreach (var param in subDefinition.Parameters)
                         {
-                            bodyLine = bodyLine.Replace(param, $"{subDefinition.StartParameterName}{param}");
+                            if (param.Length > 0)
+                            {
+                                bodyLine = bodyLine.Replace(param, $"{subDefinition.StartParameterName}{param}");
+                            }
                         }
 
                         lines.Add(bodyLine);
@@ -595,22 +613,38 @@ namespace AmstradCpcStudio.Classes
                             // Si les valeurs retournées ne sont pas au bon nombre, erreur (trop ou pas assez de paramètres passés)
 
                             if (callCode.values.Count != sub.Parameters.Count) return new GeneratorResult(ResultStatusEnum.WrongNumberSubParameters, i + 1, line);
-     
+
                             // On doit créer un bloc d'appel pour cet appel dans lequel les variables locales sont affectées et la SUB appelée
+                            // Uniquement si la SUB possède des paramètres sinon l'appel est toujours le même donc on ne le duplique pas
 
-                            sub.CallCounter += 1;
-
-                            lines.Add($"REM SUB {sub.Name} CALL {sub.CallCounter}");
-
-                            lines.Add($"{sub.StartCallName}{sub.CallCounter}");
-                            
-                            for (int p = 0; p < sub.Parameters.Count; p++)
+                            if (sub.Parameters.Count > 0)
                             {
-                                lines.Add($"{sub.StartParameterName}{sub.Parameters[p]}={callCode.values[p]}");
+                                sub.CallCounter += 1;
+                            }
+                            else
+                            {
+                                sub.CallCounter = 1;
                             }
 
-                            lines.Add($"gosub {sub.LabelName}");
-                            lines.Add("return");
+                            if (!sub.CallCodeDone)
+                            {
+                                lines.Add($"REM SUB {sub.Name} CALL {sub.CallCounter}");
+
+                                lines.Add($"{sub.StartCallName}{sub.CallCounter}");
+
+                                for (int p = 0; p < sub.Parameters.Count; p++)
+                                {
+                                    lines.Add($"{sub.StartParameterName}{sub.Parameters[p]}={callCode.values[p]}");
+                                }
+
+                                lines.Add($"gosub {sub.LabelName}");
+                                lines.Add("return");
+
+                                if (sub.Parameters.Count == 0)
+                                {
+                                    sub.CallCodeDone = true;
+                                }
+                            }
 
                             // On remplace l'appel SUB par l'appel GOSUB
 
@@ -638,30 +672,39 @@ namespace AmstradCpcStudio.Classes
             // On vérifie que chaque item est conforme
             // Types autorisés $ ! %
 
+            var trueParameters = new List<string>();    
+
             foreach (var item in parameters)
             {
-                // Le 1er caractère doit être une lettre A..Z ou a..z
-
-                var c1 = item.ToUpper()[0];
-                if (c1 < 'A' || c1 > 'Z') return null;
-
-                // Les caractères suivants (sauf le dernier) peuvent être des lettres ou des chiffres
-
-                for (var i =1; i < item.Length - 1; i++)
+                if (item.Length > 0)
                 {
-                    var cn = item.ToUpper()[i];
-                    var valid = (cn >= 'A' && cn <= 'Z' || cn >= '0' && cn <= '9');
-                    if (!valid) return null;
+                    // Le 1er caractère doit être une lettre A..Z ou a..z
 
+                    var c1 = item.ToUpper()[0];
+                    if (c1 < 'A' || c1 > 'Z') return null;
+
+                    // Les caractères suivants (sauf le dernier) peuvent être des lettres ou des chiffres
+
+                    for (var i = 1; i < item.Length - 1; i++)
+                    {
+                        var cn = item.ToUpper()[i];
+                        var valid = (cn >= 'A' && cn <= 'Z' || cn >= '0' && cn <= '9');
+                        if (!valid) return null;
+
+                    }
+
+                    // Le dernier caractère peut être une lettre ou un chiffre ou % ou ! ou $
+
+                    var cf = item.ToUpper()[item.Length - 1];
+                    if (!(cf >= 'A' && cf <= 'Z' || cf >= '0' && cf <= '9' || cf == '%' || cf == '!' || cf == '$')) return null;
+
+                    // Ce paramètre n'est pas vide on le prend en compte
+
+                    trueParameters.Add(item);
                 }
-
-                // Le dernier caractère peut être une lettre ou un chiffre ou % ou ! ou $
-
-                var cf = item.ToUpper()[item.Length - 1];
-                if (!(cf >= 'A' && cf <= 'Z' || cf >= '0' && cf <= '9' || cf == '%' || cf == '!' || cf == '$')) return null;
             }
 
-            return parameters.ToList();
+            return trueParameters;
         }
 
         private (List<string> values, int endPosition) DispatchSubCallCode(SubDefinition subDefinition, string  line, int startPosition)
@@ -1081,7 +1124,7 @@ namespace AmstradCpcStudio.Classes
                             ResultStatusEnum.ReturnStatementNotAllowedInIfPlus => "RETURN non autorisé dans un bloc IF+",
                             ResultStatusEnum.DuplicateSubDefinition => "SUB définie plusieurs fois",
                             ResultStatusEnum.SubDefinitionError => "Définition d'une SUB non valide",
-                            ResultStatusEnum.EndSubStatementMissingInSub => "ENDSUB non trouvé à la fin d'une SUB",
+                            ResultStatusEnum.EndSubStatementMissingInSub => "END SUB non trouvé à la fin d'une SUB",
                             ResultStatusEnum.WrongNumberSubParameters => "Nombre de paramètres incorrects lors de l'appel d'une SUB",
                             ResultStatusEnum.None => "Aucun.",
                             _ => "Statut inconnu !"
@@ -1354,6 +1397,8 @@ namespace AmstradCpcStudio.Classes
             public string StartSubCallName => $"{Name}[";
 
             public int CallCounter { get; set; }
+
+            public bool CallCodeDone { get; set; }
 
             public SubDefinition(string name, List<string> parameters, List<string> body)
             {

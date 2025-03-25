@@ -41,5 +41,11 @@
     <Setting Name="BasicEditorFontSize" Type="System.Single" Scope="User">
       <Value Profile="(Default)">12</Value>
     </Setting>
+    <Setting Name="LastFilesBasicPlus" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LastFilesBasic" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

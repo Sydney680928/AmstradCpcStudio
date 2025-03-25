@@ -92,10 +92,21 @@ namespace AmstradCpcStudio.Forms
             var r = d.ShowDialog();
             Application.DoEvents();
 
+            var fn = CurrentFilename;
+
             if (r == DialogResult.OK)
             {
                 CurrentFilename = d.FileName;
-                return Save();
+
+                var r1 = Save();
+
+                if (r1 && fn != CurrentFilename)
+                {
+                    AddFileBasicPlusInLastFiles(CurrentFilename);
+                    FormMain.Default.UpdateBasicPlusLastFilesMenu();
+                }
+
+                return r1;
             }
 
             return false;
@@ -118,6 +129,36 @@ namespace AmstradCpcStudio.Forms
 
             }
         }
+
+        private void AddFileBasicPlusInLastFiles(string? filename)
+        {
+            if (filename != null)
+            {
+                // On ajoute le fichier dans la liste des derniers fichiers ouverts
+
+                if (Properties.Settings.Default.LastFilesBasicPlus == null) Properties.Settings.Default.LastFilesBasicPlus = new System.Collections.Specialized.StringCollection();
+
+                // Si déjà présent en l'enlève de la liste
+
+                if (Properties.Settings.Default.LastFilesBasicPlus.Contains(filename)) Properties.Settings.Default.LastFilesBasicPlus.Remove(filename);
+
+                // On l'ajoute au début
+
+                Properties.Settings.Default.LastFilesBasicPlus.Insert(0, filename);
+
+                // max 10 fichiers dans la liste
+
+                while (Properties.Settings.Default.LastFilesBasicPlus.Count > 10)
+                {
+                    Properties.Settings.Default.LastFilesBasicPlus.RemoveAt(Properties.Settings.Default.LastFilesBasicPlus.Count - 1);
+                }
+
+                // save
+
+                Properties.Settings.Default.Save();
+            }
+        }
+
 
         #region UI EVENTS
 
@@ -176,8 +217,16 @@ namespace AmstradCpcStudio.Forms
         {
             if (_CodeIsModified)
             {
-                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, si vous continuez vous allez perdre vos modifications !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
-                e.Cancel = r == DialogResult.Cancel;
+                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, voulez-vous l'enregistrer ?", "AMSTRAD CPC STUDIO", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (r == DialogResult.Yes)
+                {
+                    e.Cancel = !Save();
+                }
+                else if (r == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                }
             }
         }
 

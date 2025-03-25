@@ -40,6 +40,9 @@
             SymbolsMenu = new ToolStripMenuItem();
             WindowsMenu = new ToolStripMenuItem();
             AboutMenu = new ToolStripMenuItem();
+            récentsToolStripMenuItem = new ToolStripMenuItem();
+            LastFilesBasicPlusMenu = new ToolStripMenuItem();
+            LastFilesBasicMenu = new ToolStripMenuItem();
             menuStrip1 = new MenuStrip();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -61,7 +64,7 @@
             // 
             // FileMenu
             // 
-            FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewMenu, OpenMenu });
+            FileMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewMenu, OpenMenu, récentsToolStripMenuItem });
             FileMenu.Name = "FileMenu";
             FileMenu.Size = new Size(54, 26);
             FileMenu.Text = "Fichier";
@@ -70,7 +73,7 @@
             // 
             FileNewMenu.DropDownItems.AddRange(new ToolStripItem[] { FileNewProgramBasicPlusMenu, FileNewProgramBasicMenu });
             FileNewMenu.Name = "FileNewMenu";
-            FileNewMenu.Size = new Size(122, 22);
+            FileNewMenu.Size = new Size(180, 22);
             FileNewMenu.Text = "Nouveau";
             // 
             // FileNewProgramBasicPlusMenu
@@ -91,7 +94,7 @@
             // 
             OpenMenu.DropDownItems.AddRange(new ToolStripItem[] { OpenProgramBasicPlusMenu, OpenProgramBasicMenu });
             OpenMenu.Name = "OpenMenu";
-            OpenMenu.Size = new Size(122, 22);
+            OpenMenu.Size = new Size(180, 22);
             OpenMenu.Text = "Ouvrir";
             // 
             // OpenProgramBasicPlusMenu
@@ -127,6 +130,25 @@
             AboutMenu.Text = "A propos de...";
             AboutMenu.Click += AboutMenu_Click;
             // 
+            // récentsToolStripMenuItem
+            // 
+            récentsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { LastFilesBasicPlusMenu, LastFilesBasicMenu });
+            récentsToolStripMenuItem.Name = "récentsToolStripMenuItem";
+            récentsToolStripMenuItem.Size = new Size(180, 22);
+            récentsToolStripMenuItem.Text = "Récents";
+            // 
+            // LastFilesBasicPlusMenu
+            // 
+            LastFilesBasicPlusMenu.Name = "LastFilesBasicPlusMenu";
+            LastFilesBasicPlusMenu.Size = new Size(254, 22);
+            LastFilesBasicPlusMenu.Text = "Programmes BASIC+";
+            // 
+            // LastFilesBasicMenu
+            // 
+            LastFilesBasicMenu.Name = "LastFilesBasicMenu";
+            LastFilesBasicMenu.Size = new Size(254, 22);
+            LastFilesBasicMenu.Text = "Programmes LOCOMOTIVE BASIC";
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -159,5 +181,8 @@
         private ToolStripMenuItem OpenMenu;
         private ToolStripMenuItem OpenProgramBasicPlusMenu;
         private ToolStripMenuItem OpenProgramBasicMenu;
+        private ToolStripMenuItem récentsToolStripMenuItem;
+        private ToolStripMenuItem LastFilesBasicPlusMenu;
+        private ToolStripMenuItem LastFilesBasicMenu;
     }
 }

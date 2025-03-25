@@ -33,7 +33,17 @@ namespace AmstradCpcStudio.Forms
 
             CurrentFilename = filename;
             CodeEditor.Text = code;
-            _CodeIsModified = false;
+
+            if (string.IsNullOrEmpty(filename) && !string.IsNullOrEmpty(code))
+            {
+                // Le code n'a jamais été enregistré il faut le protéger
+
+                _CodeIsModified = true;
+            }
+            else
+            {
+                _CodeIsModified = false;
+            }
 
             UpdateFormTitle();
         }
@@ -88,10 +98,21 @@ namespace AmstradCpcStudio.Forms
             var r = d.ShowDialog();
             Application.DoEvents();
 
+            var fn = CurrentFilename;
+
             if (r == DialogResult.OK)
             {
                 CurrentFilename = d.FileName;
-                return Save();
+
+                var r1 = Save();
+                
+                if (r1 && fn != CurrentFilename)
+                {
+                    AddFileBasicInLastFiles(CurrentFilename);
+                    FormMain.Default.UpdateBasicLastFilesMenu();
+                }
+
+                return r1;
             }
 
             return false;
@@ -115,6 +136,35 @@ namespace AmstradCpcStudio.Forms
             }
         }
 
+        private void AddFileBasicInLastFiles(string? filename)
+        {
+            if (filename != null)
+            {
+                // On ajoute le fichier dans la liste des derniers fichiers ouverts
+
+                if (Properties.Settings.Default.LastFilesBasic == null) Properties.Settings.Default.LastFilesBasic = new System.Collections.Specialized.StringCollection();
+
+                // Si déjà présent en l'enlève de la liste
+
+                if (Properties.Settings.Default.LastFilesBasic.Contains(filename)) Properties.Settings.Default.LastFilesBasic.Remove(filename);
+
+                // On l'ajoute au début
+
+                Properties.Settings.Default.LastFilesBasic.Insert(0, filename);
+
+                // max 10 fichiers dans la liste
+
+                while (Properties.Settings.Default.LastFilesBasic.Count > 10)
+                {
+                    Properties.Settings.Default.LastFilesBasic.RemoveAt(Properties.Settings.Default.LastFilesBasic.Count - 1);
+                }
+
+                // save
+
+                Properties.Settings.Default.Save();
+            }
+        }
+
 
         #region UI EVENTS
 
@@ -132,7 +182,7 @@ namespace AmstradCpcStudio.Forms
             if (SaveAs())
             {
                 _CodeIsModified = false;
-                UpdateFormTitle();
+                UpdateFormTitle();          
             }
         }
 
@@ -150,8 +200,16 @@ namespace AmstradCpcStudio.Forms
         {
             if (_CodeIsModified)
             {
-                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, si vous continuez vous allez perdre vos modifications !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
-                e.Cancel = r == DialogResult.Cancel;
+                var r = MessageBox.Show(this.MdiParent, "Le code a été modifié, voulez-vous l'enregistrer ?", "AMSTRAD CPC STUDIO", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (r == DialogResult.Yes)
+                {
+                    e.Cancel = !Save();
+                }
+                else if (r == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                }
             }
         }
 

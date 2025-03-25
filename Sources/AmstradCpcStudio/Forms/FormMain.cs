@@ -22,6 +22,10 @@ namespace AmstradCpcStudio.Forms
                     break;
                 }
             }
+
+            UpdateBasicPlusLastFilesMenu();
+
+            UpdateBasicLastFilesMenu();
         }
 
         public bool PrintDocument(TextEditorControl editor)
@@ -42,6 +46,57 @@ namespace AmstradCpcStudio.Forms
             return false;
         }
 
+        public void UpdateBasicPlusLastFilesMenu()
+        {
+            foreach (var item in LastFilesBasicPlusMenu.DropDownItems)
+            {
+                if (item is ToolStripMenuItem menuItem) menuItem.Click -= LastFileBasicPlusMenuItem_Click;
+            }
+
+            LastFilesBasicPlusMenu.DropDownItems.Clear();
+
+            if (Properties.Settings.Default.LastFilesBasicPlus != null)
+            {
+                foreach (var file in Properties.Settings.Default.LastFilesBasicPlus)
+                {
+                    var menuItem = new ToolStripMenuItem();
+
+                    menuItem.Text = Path.GetFileName(file);
+                    menuItem.Tag = file;
+                    menuItem.ToolTipText = file;
+                    menuItem.AutoToolTip = true;
+                    menuItem.Click += LastFileBasicPlusMenuItem_Click;
+
+                    LastFilesBasicPlusMenu.DropDownItems.Add(menuItem);
+                }
+            }
+        }
+
+        public void UpdateBasicLastFilesMenu()
+        {
+            foreach (var item in LastFilesBasicMenu.DropDownItems)
+            {
+                if (item is ToolStripMenuItem menuItem) menuItem.Click -= LastFileBasicMenuItem_Click;
+            }
+
+            LastFilesBasicMenu.DropDownItems.Clear();
+
+            if (Properties.Settings.Default.LastFilesBasic != null)
+            {
+                foreach (var file in Properties.Settings.Default.LastFilesBasic)
+                {
+                    var menuItem = new ToolStripMenuItem();
+
+                    menuItem.Text = Path.GetFileName(file);
+                    menuItem.Tag = file;
+                    menuItem.ToolTipText = file;
+                    menuItem.AutoToolTip = true;
+                    menuItem.Click += LastFileBasicMenuItem_Click;
+
+                    LastFilesBasicMenu.DropDownItems.Add(menuItem);
+                }
+            }
+        }
 
         private bool OpenBasicPlusFile()
         {
@@ -59,38 +114,7 @@ namespace AmstradCpcStudio.Forms
 
             if (r == DialogResult.OK && d.FileName != null)
             {
-                // On vérifie que le fichier n'est pas déjà ouvert 
-
-                foreach (var form in MdiChildren)
-                {
-                    if (form is FormEditorBasicPlus f && f.CurrentFilename != null && f.CurrentFilename == d.FileName)
-                    {
-                        // Le fichier est déjà ouvert, on place en AVP l'éditeur correspondant
-
-                        form.Activate();
-                        Application.DoEvents();
-
-                        // Et on affiche un message pour prévenir
-
-                        MessageBox.Show(this, "Le fichier est déjà ouvert.", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        return false;
-                    }
-                }
-
-                // On charge le fichier
-
-                try
-                {
-                    using var reader = new StreamReader(d.FileName);
-                    var code = reader.ReadToEnd();
-                    OpenBasicPlusEditor(d.FileName, code);
-                    return true;
-                }
-                catch
-                {
-                    MessageBox.Show(this, "Impossible d'ouvrir le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                return OpenFileInBasicPlusEditor(d.FileName);
             }
 
             return false;
@@ -112,43 +136,97 @@ namespace AmstradCpcStudio.Forms
 
             if (r == DialogResult.OK && d.FileName != null)
             {
-                // On vérifie que le fichier n'est pas déjà ouvert 
-
-                foreach (var form in MdiChildren)
-                {
-                    if (form is FormEditorBasic f && f.CurrentFilename != null && f.CurrentFilename == d.FileName)
-                    {
-                        // Le fichier est déjà ouvert, on place en AVP l'éditeur correspondant
-
-                        form.Activate();
-                        Application.DoEvents();
-
-                        // Et on affiche un message pour prévenir
-
-                        MessageBox.Show(this, "Le fichier est déjà ouvert.", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        return false;
-                    }
-                }
-
-                // On charge le fichier
-
-                try
-                {
-                    using var reader = new StreamReader(d.FileName);
-                    var code = reader.ReadToEnd();
-                    OpenBasicEditor(d.FileName, code);
-                    return true;
-                }
-                catch
-                {
-                    MessageBox.Show(this, "Impossible d'ouvrir le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                OpenFileInBasicEditor(d.FileName);
             }
 
             return false;
         }
 
+        private bool OpenFileInBasicPlusEditor(string filename)
+        {
+            // On vérifie que le fichier n'est pas déjà ouvert 
+
+            foreach (var form in MdiChildren)
+            {
+                if (form is FormEditorBasicPlus f && f.CurrentFilename != null && f.CurrentFilename == filename)
+                {
+                    // Le fichier est déjà ouvert, on place en AVP l'éditeur correspondant
+
+                    form.Activate();
+                    Application.DoEvents();
+
+                    // Et on affiche un message pour prévenir
+
+                    MessageBox.Show(this, "Le fichier est déjà ouvert.", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    return false;
+                }
+            }
+
+            // On charge le fichier
+
+            try
+            {
+                using var reader = new StreamReader(filename);
+                var code = reader.ReadToEnd();
+
+                OpenBasicPlusEditor(filename, code);
+
+                AddFileBasicPlusInLastFiles(filename);
+                UpdateBasicPlusLastFilesMenu();
+
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show(this, "Impossible d'ouvrir le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return false;
+        }
+
+        private bool OpenFileInBasicEditor(string filename)
+        {
+            // On vérifie que le fichier n'est pas déjà ouvert 
+
+            foreach (var form in MdiChildren)
+            {
+                if (form is FormEditorBasic f && f.CurrentFilename != null && f.CurrentFilename == filename)
+                {
+                    // Le fichier est déjà ouvert, on place en AVP l'éditeur correspondant
+
+                    form.Activate();
+                    Application.DoEvents();
+
+                    // Et on affiche un message pour prévenir
+
+                    MessageBox.Show(this, "Le fichier est déjà ouvert.", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    return false;
+                }
+            }
+
+            // On charge le fichier
+
+            try
+            {
+                using var reader = new StreamReader(filename);
+                var code = reader.ReadToEnd();
+
+                OpenBasicEditor(filename, code);
+
+                AddFileBasicInLastFiles(filename);
+                UpdateBasicLastFilesMenu();
+
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show(this, "Impossible d'ouvrir le fichier !", "AMSTRAD CPC STUDIO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return false;
+        }
 
         private void OpenBasicPlusEditor(string? filename = null, string? code = null)
         {
@@ -163,6 +241,65 @@ namespace AmstradCpcStudio.Forms
             f.MdiParent = this;
             f.Show();
         }
+
+        private void AddFileBasicPlusInLastFiles(string? filename)
+        {
+            if (filename != null)
+            {
+                // On ajoute le fichier dans la liste des derniers fichiers ouverts
+
+                if (Properties.Settings.Default.LastFilesBasicPlus == null) Properties.Settings.Default.LastFilesBasicPlus = new System.Collections.Specialized.StringCollection();
+
+                // Si déjà présent en l'enlève de la liste
+
+                if (Properties.Settings.Default.LastFilesBasicPlus.Contains(filename)) Properties.Settings.Default.LastFilesBasicPlus.Remove(filename);
+
+                // On l'ajoute au début
+
+                Properties.Settings.Default.LastFilesBasicPlus.Insert(0, filename);
+
+                // max 10 fichiers dans la liste
+
+                while (Properties.Settings.Default.LastFilesBasicPlus.Count > 10)
+                {
+                    Properties.Settings.Default.LastFilesBasicPlus.RemoveAt(Properties.Settings.Default.LastFilesBasicPlus.Count - 1);
+                }
+
+                // save
+
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private void AddFileBasicInLastFiles(string? filename)
+        {
+            if (filename != null)
+            {
+                // On ajoute le fichier dans la liste des derniers fichiers ouverts
+
+                if (Properties.Settings.Default.LastFilesBasic == null) Properties.Settings.Default.LastFilesBasic = new System.Collections.Specialized.StringCollection();
+
+                // Si déjà présent en l'enlève de la liste
+
+                if (Properties.Settings.Default.LastFilesBasic.Contains(filename)) Properties.Settings.Default.LastFilesBasic.Remove(filename);
+
+                // On l'ajoute au début
+
+                Properties.Settings.Default.LastFilesBasic.Insert(0, filename);
+
+                // max 10 fichiers dans la liste
+
+                while (Properties.Settings.Default.LastFilesBasic.Count > 10)
+                {
+                    Properties.Settings.Default.LastFilesBasic.RemoveAt(Properties.Settings.Default.LastFilesBasic.Count - 1);
+                }
+
+                // save
+
+                Properties.Settings.Default.Save();
+            }
+        }
+
 
         #region UI EVENTS
 
@@ -214,6 +351,22 @@ namespace AmstradCpcStudio.Forms
             var f = new FormAbout();
             f.ShowDialog(this);
             Application.DoEvents();
+        }
+
+        private void LastFileBasicPlusMenuItem_Click(object? sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem menuItem && menuItem.Tag is string filename)
+            {
+                OpenFileInBasicPlusEditor(filename);    
+            }
+        }
+
+        private void LastFileBasicMenuItem_Click(object? sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem menuItem && menuItem.Tag is string filename)
+            {
+                OpenFileInBasicEditor(filename);
+            }
         }
 
         #endregion

@@ -178,5 +178,27 @@ namespace AmstradCpcStudio.Properties {
                 this["BasicEditorFontSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection LastFilesBasicPlus {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["LastFilesBasicPlus"]));
+            }
+            set {
+                this["LastFilesBasicPlus"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection LastFilesBasic {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["LastFilesBasic"]));
+            }
+            set {
+                this["LastFilesBasic"] = value;
+            }
+        }
     }
 }
