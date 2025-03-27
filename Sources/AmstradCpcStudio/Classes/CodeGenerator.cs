@@ -175,7 +175,7 @@ namespace AmstradCpcStudio.Classes
                         {
                             // On a bien un nombre en 1er sur la ligne, c'est interdit !
 
-                            return new GeneratorResult(ResultStatusEnum.LineNumberNotAllowed, lineNumber, line);
+                            return new GeneratorResult(ResultStatusEnum.LineNumberNotAllowed, lineNumber + 1, line);
                         }
                     }
 
